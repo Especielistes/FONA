@@ -92,10 +92,24 @@ async def _receive_input(ws: WebSocket, detector: UtteranceDetector) -> str | No
             kind = payload.get("type")
             if kind == "hangup":
                 return None
+            
             if kind == "text":
                 content = (payload.get("content") or "").strip()
-                if content:
-                    return content
+                if not content:
+                    continue
+                # El texto que se muestra en pantalla es el del visitante; al
+                # modelo le añadimos el contexto de la modalidad para que sepa
+                # con qué puede contar el visitante para responderle.
+                if payload.get("source") == "signs":
+                    vocabulary = ", ".join(payload.get("vocabulary") or [])
+                    annotated = (
+                        f"{content}\n\n[Mensaje en lengua de signos. "
+                        f"Vocabulario disponible: {vocabulary}]"
+                    )
+                else:
+                    annotated = content
+
+                return {"display": content, "model": annotated}
 
 
 async def run(ws: WebSocket) -> None:
@@ -109,13 +123,13 @@ async def run(ws: WebSocket) -> None:
 
     try:
         while True:
-            text = await _receive_input(ws, detector)
-            if text is None:
+            entry = await _receive_input(ws, detector)
+            if entry is None:
                 break
 
-            log.info("VISITANTE: %s", text)
-            await _send(ws, {"type": "transcript", "role": "visitor", "content": text})
-            messages.append({"role": "user", "content": text})
+            log.info("VISITANTE: %s", entry["display"])
+            await _send(ws, {"type": "transcript", "role": "visitor", "content": entry["display"]})
+            messages.append({"role": "user", "content": entry["model"]})
 
             reply, end_session = await llm.respond(messages, ctx)
 
