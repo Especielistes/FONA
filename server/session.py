@@ -102,7 +102,7 @@ async def run(ws: WebSocket) -> None:
     """Gestiona una conversación de principio a fin."""
     detector = UtteranceDetector()
     messages: list[dict] = [{"role": "system", "content": llm.SYSTEM_PROMPT}]
-    ctx: dict = {"open_door": False}
+    ctx: dict = {"open_door": False, "ws": ws}
 
     await _speak(ws, llm.GREETING)
     messages.append({"role": "assistant", "content": llm.GREETING})

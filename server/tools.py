@@ -148,7 +148,14 @@ async def solicitar_apertura(ctx: dict, visitante: str, motivo: str) -> str:
         category="apertura",
         request_id=request.id,
     )
-
+    
+    ws = ctx.get("ws")
+    if ws is not None:
+        await ws.send_text(json.dumps({
+            "type": "transcript",
+            "role": "system",
+            "content": "Consultando con el residente…",
+        }, ensure_ascii=False))
     try:
         await asyncio.wait_for(request.event.wait(), timeout=config.DOOR_CONFIRM_TIMEOUT_S)
     except asyncio.TimeoutError:
@@ -166,8 +173,9 @@ async def solicitar_apertura(ctx: dict, visitante: str, motivo: str) -> str:
 
 @tool(
     description=(
-        "Guarda un mensaje para el residente cuando este no responde o el visitante "
-        "prefiere dejar un aviso."
+        "Envía al residente la petición de abrir la puerta y espera su respuesta. "
+        "Invócala siempre que el visitante pida entrar. El resultado te dirá si "
+        "se ha autorizado o no."
     ),
     params={
         "visitante": {"type": "string", "description": "Quién deja el mensaje"},

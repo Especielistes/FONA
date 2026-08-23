@@ -1,0 +1,14 @@
+# Activar server
+
+cd server 
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.venv\Scripts\Activate.ps1
+uvicorn main:app --port 8080
+
+# Activar web
+cd tools
+python -m http.server 8000
+
+
+
+
