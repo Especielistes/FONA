@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrenador de signos — Videoportero accesible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #E9ECF2;
+    --surface: #FFFFFF;
+    --ink: #171A21;
+    --muted: #5C6575;
+    --line: #C9D0DB;
+    --accent: #5B3DF5;
+    --signal: #0E9E8C;
+    --alert: #D2374F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 28px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Archivo", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  header {
+    max-width: 1180px;
+    margin: 0 auto 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  #status {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px;
+  }
+
+  /* ---- cámara ---- */
+
+  #stage {
+    position: relative;
+    background: #0B0D12;
+    border-radius: 3px;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+  }
+
+  #video, #overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: scaleX(-1);
+  }
+
+  #video { object-fit: cover; }
+
+  #recBadge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--alert);
+    color: #fff;
+    border-radius: 2px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+
+  #recBadge.on { display: flex; }
+
+  #recBadge .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+    animation: blink 900ms steps(2, start) infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0.15; } }
+
+  /* ---- lectura en directo ---- */
+
+  .readout {
+    margin-top: 16px;
+    border-top: 2px solid var(--ink);
+    padding-top: 14px;
+  }
+
+  #prediction {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    min-height: 44px;
+  }
+
+  #prediction.idle { color: var(--line); }
+  #prediction.locked { color: var(--signal); }
+
+  .metrics {
+    display: flex;
+    gap: 24px;
+    margin-top: 10px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .metrics b { color: var(--ink); font-weight: 600; }
+
+  #distBar {
+    height: 3px;
+    background: var(--line);
+    margin-top: 12px;
+  }
+
+  #distFill {
+    height: 100%;
+    width: 0%;
+    background: var(--signal);
+    transition: width 90ms linear, background 200ms;
+  }
+
+  /* ---- etiquetas ---- */
+
+  .panel h2 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin: 0 0 12px;
+  }
+
+  #labels { display: flex; flex-direction: column; gap: 2px; }
+
+  .label-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: 2px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+
+  .label-row:hover { background: var(--paper); }
+
+  .label-row.selected {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 7%, white);
+  }
+
+  .label-row .name { font-weight: 600; }
+
+  .label-row .count {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  .label-row .count.ready { color: var(--signal); }
+
+  .label-row .del {
+    border: 0;
+    background: none;
+    color: var(--line);
+    cursor: pointer;
+    font-size: 15px;
+    padding: 0 2px;
+  }
+
+  .label-row .del:hover { color: var(--alert); }
+
+  /* ---- controles ---- */
+
+  .controls { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  button {
+    font-family: "Archivo", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 2px;
+    border: 1px solid var(--ink);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled) { background: var(--ink); color: var(--surface); }
+
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { background: #4A2FD8; border-color: #4A2FD8; }
+
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+
+  input[type="text"] {
+    font-family: "Archivo", sans-serif;
+    font-size: 14px;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: var(--surface);
+    color: var(--ink);
+    width: 100%;
+  }
+
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+  .field {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .hint {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+
+  kbd {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 2px;
+    padding: 1px 5px;
+    background: var(--paper);
+  }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+    body { padding: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="eyebrow">Videoportero accesible · herramienta 1 de 3</div>
+    <h1>Entrenador de signos</h1>
+  </div>
+  <div id="status">Inicializando MediaPipe…</div>
+</header>
+
+<main>
+  <section class="panel">
+    <div id="stage">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div id="recBadge"><span class="dot"></span><span id="recText">GRABANDO</span></div>
+    </div>
+
+    <div class="readout">
+      <div class="eyebrow">Reconocimiento en directo</div>
+      <div id="prediction" class="idle">—</div>
+      <div class="metrics">
+        <span>distancia <b id="mDist">—</b></span>
+        <span>manos <b id="mHands">0</b></span>
+        <span>fps <b id="mFps">0</b></span>
+      </div>
+      <div id="distBar"><div id="distFill"></div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Signos</h2>
+    <div id="labels"></div>
+
+    <div class="controls">
+      <div class="row">
+        <input type="text" id="newLabel" placeholder="Añadir signo…" maxlength="24">
+        <button id="addLabel" style="flex:0 0 auto">Añadir</button>
+      </div>
+
+      <button id="record" class="primary" disabled>Grabar 30 muestras</button>
+
+      <div>
+        <div class="field"><span>Umbral de rechazo</span><span id="thrValue">0.90</span></div>
+        <input type="range" id="threshold" min="0.2" max="2.0" step="0.05" value="0.9">
+      </div>
+
+      <div class="row">
+        <button id="export">Descargar</button>
+        <button id="import">Cargar</button>
+      </div>
+      <input type="file" id="fileInput" accept="application/json" hidden>
+    </div>
+
+    <p class="hint">
+      Selecciona un signo, haz la postura y pulsa <kbd>Espacio</kbd>. Mueve ligeramente
+      la mano mientras graba: las muestras variadas clasifican mejor.
+      Con 30 muestras por signo ya funciona.<br><br>
+      Baja el umbral si confunde signos distintos; súbelo si no reconoce ninguno.
+      La distancia que ves es la media de los 5 vecinos más cercanos.
+    </p>
+  </section>
+</main>
+
+<script type="module">
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+// ---------------------------------------------------------------- constantes
+
+const K = 5;                    // vecinos del k-NN
+const SAMPLES_PER_RECORDING = 30;
+const SAMPLE_INTERVAL_MS = 60;  // 30 muestras ≈ 1,8 s
+const SMOOTHING_FRAMES = 8;     // ventana de votos
+const SMOOTHING_REQUIRED = 6;   // votos iguales para aceptar un signo
+
+// Pares de puntos del grafo de la mano, para dibujar el esqueleto.
+const CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17]
+];
+
+const DEFAULT_LABELS = [
+  "hola", "gracias", "sí", "no", "ayuda",
+  "paquete", "visita", "vecino", "abrir", "no entiendo"
+];
+
+// ---------------------------------------------------------------- estado
+
+const dataset = new Map();   // etiqueta -> array de vectores
+let selectedLabel = null;
+let recording = false;
+let recordedCount = 0;
+let lastSampleAt = 0;
+let threshold = 0.9;
+const voteBuffer = [];
+
+let landmarker = null;
+let lastVideoTime = -1;
+let frameTimes = [];
+
+DEFAULT_LABELS.forEach(label => dataset.set(label, []));
+
+// ---------------------------------------------------------------- elementos
+
+const video = document.getElementById("video");
+const overlay = document.getElementById("overlay");
+const ctx = overlay.getContext("2d");
+const statusEl = document.getElementById("status");
+const predictionEl = document.getElementById("prediction");
+const mDist = document.getElementById("mDist");
+const mHands = document.getElementById("mHands");
+const mFps = document.getElementById("mFps");
+const distFill = document.getElementById("distFill");
+const labelsEl = document.getElementById("labels");
+const recordBtn = document.getElementById("record");
+const recBadge = document.getElementById("recBadge");
+const recText = document.getElementById("recText");
+
+// ---------------------------------------------------------------- vectores
+
+/**
+ * Normaliza una mano: origen en la muñeca y escala invariante a la distancia
+ * a la cámara. Sin esto, el mismo signo a 30 cm y a 80 cm son vectores
+ * completamente distintos.
+ */
+function normalizeHand(landmarks) {
+  const wrist = landmarks[0];
+  const relative = [];
+  let maxNorm = 0;
+
+  for (const point of landmarks) {
+    const x = point.x - wrist.x;
+    const y = point.y - wrist.y;
+    const z = point.z - wrist.z;
+    relative.push([x, y, z]);
+    const norm = Math.hypot(x, y, z);
+    if (norm > maxNorm) maxNorm = norm;
+  }
+
+  if (maxNorm === 0) maxNorm = 1;
+
+  const flat = [];
+  for (const [x, y, z] of relative) {
+    flat.push(x / maxNorm, y / maxNorm, z / maxNorm);
+  }
+  return flat;  // 63 valores
+}
+
+/**
+ * Vector de 128 dimensiones: mano derecha (63) + mano izquierda (63) + presencia (2).
+ * Las manos ausentes quedan a cero, y los indicadores de presencia evitan que
+ * un signo a una mano se parezca a uno de dos manos con una mano mal detectada.
+ */
+function buildFeatureVector(result) {
+  const right = new Array(63).fill(0);
+  const left = new Array(63).fill(0);
+  let hasRight = 0;
+  let hasLeft = 0;
+
+  for (let i = 0; i < result.landmarks.length; i++) {
+    const normalized = normalizeHand(result.landmarks[i]);
+    const handedness = result.handedness[i]?.[0]?.categoryName;
+
+    if (handedness === "Right") {
+      for (let j = 0; j < 63; j++) right[j] = normalized[j];
+      hasRight = 1;
+    } else {
+      for (let j = 0; j < 63; j++) left[j] = normalized[j];
+      hasLeft = 1;
+    }
+  }
+
+  return [...right, ...left, hasRight, hasLeft];
+}
+
+function distance(a, b) {
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) {
+    const diff = a[i] - b[i];
+    sum += diff * diff;
+  }
+  return Math.sqrt(sum);
+}
+
+/** k-NN por fuerza bruta. Con cientos de muestras va sobrado. */
+function classify(vector) {
+  const neighbours = [];
+
+  for (const [label, samples] of dataset) {
+    for (const sample of samples) {
+      neighbours.push({ label, dist: distance(vector, sample) });
+    }
+  }
+
+  if (neighbours.length === 0) return null;
+
+  neighbours.sort((a, b) => a.dist - b.dist);
+  const top = neighbours.slice(0, K);
+
+  const votes = new Map();
+  for (const item of top) {
+    votes.set(item.label, (votes.get(item.label) || 0) + 1);
+  }
+
+  let best = null;
+  let bestVotes = 0;
+  for (const [label, count] of votes) {
+    if (count > bestVotes) {
+      best = label;
+      bestVotes = count;
+    }
+  }
+
+  // Media solo de los vecinos que han votado al ganador.
+  const matching = top.filter(item => item.label === best);
+  const meanDist = matching.reduce((acc, item) => acc + item.dist, 0) / matching.length;
+
+  return { label: best, dist: meanDist, accepted: meanDist <= threshold };
+}
+
+// ---------------------------------------------------------------- dibujo
+
+function draw(result) {
+  overlay.width = video.videoWidth || 640;
+  overlay.height = video.videoHeight || 480;
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+  for (const landmarks of result.landmarks) {
+    ctx.strokeStyle = "#37F0C2";
+    ctx.lineWidth = 2.5;
+    for (const [from, to] of CONNECTIONS) {
+      ctx.beginPath();
+      ctx.moveTo(landmarks[from].x * overlay.width, landmarks[from].y * overlay.height);
+      ctx.lineTo(landmarks[to].x * overlay.width, landmarks[to].y * overlay.height);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "#FFFFFF";
+    for (const point of landmarks) {
+      ctx.beginPath();
+      ctx.arc(point.x * overlay.width, point.y * overlay.height, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+// ---------------------------------------------------------------- bucle
+
+function updateFps() {
+  const now = performance.now();
+  frameTimes.push(now);
+  while (frameTimes.length > 0 && now - frameTimes[0] > 1000) frameTimes.shift();
+  mFps.textContent = frameTimes.length;
+}
+
+function smoothPrediction(result) {
+  voteBuffer.push(result ? (result.accepted ? result.label : null) : null);
+  if (voteBuffer.length > SMOOTHING_FRAMES) voteBuffer.shift();
+
+  const counts = new Map();
+  for (const vote of voteBuffer) {
+    if (vote === null) continue;
+    counts.set(vote, (counts.get(vote) || 0) + 1);
+  }
+
+  for (const [label, count] of counts) {
+    if (count >= SMOOTHING_REQUIRED) return label;
+  }
+  return null;
+}
+
+function loop() {
+  if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+    lastVideoTime = video.currentTime;
+    const result = landmarker.detectForVideo(video, performance.now());
+
+    draw(result);
+    mHands.textContent = result.landmarks.length;
+    updateFps();
+
+    if (result.landmarks.length > 0) {
+      const vector = buildFeatureVector(result);
+
+      if (recording && performance.now() - lastSampleAt >= SAMPLE_INTERVAL_MS) {
+        dataset.get(selectedLabel).push(vector);
+        recordedCount++;
+        lastSampleAt = performance.now();
+        recText.textContent = `GRABANDO ${recordedCount}/${SAMPLES_PER_RECORDING}`;
+        renderLabels();
+        if (recordedCount >= SAMPLES_PER_RECORDING) stopRecording();
+      }
+
+      const guess = classify(vector);
+      const stable = smoothPrediction(guess);
+
+      if (guess) {
+        mDist.textContent = guess.dist.toFixed(3);
+        const ratio = Math.min(guess.dist / (threshold * 2), 1);
+        distFill.style.width = `${(1 - ratio) * 100}%`;
+        distFill.style.background = guess.accepted ? "var(--signal)" : "var(--alert)";
+      }
+
+      if (stable) {
+        predictionEl.textContent = stable;
+        predictionEl.className = "locked";
+      } else {
+        predictionEl.textContent = guess && !guess.accepted ? "desconocido" : "…";
+        predictionEl.className = "idle";
+      }
+    } else {
+      smoothPrediction(null);
+      predictionEl.textContent = "—";
+      predictionEl.className = "idle";
+      mDist.textContent = "—";
+      distFill.style.width = "0%";
+    }
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// ---------------------------------------------------------------- grabación
+
+function startRecording() {
+  if (!selectedLabel || recording) return;
+  recording = true;
+  recordedCount = 0;
+  lastSampleAt = 0;
+  recBadge.classList.add("on");
+  recordBtn.disabled = true;
+}
+
+function stopRecording() {
+  recording = false;
+  recBadge.classList.remove("on");
+  recordBtn.disabled = selectedLabel === null;
+  renderLabels();
+}
+
+// ---------------------------------------------------------------- interfaz
+
+function renderLabels() {
+  labelsEl.innerHTML = "";
+
+  for (const [label, samples] of dataset) {
+    const row = document.createElement("div");
+    row.className = "label-row" + (label === selectedLabel ? " selected" : "");
+
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = label;
+
+    const count = document.createElement("span");
+    count.className = "count" + (samples.length >= SAMPLES_PER_RECORDING ? " ready" : "");
+    count.textContent = samples.length;
+
+    const del = document.createElement("button");
+    del.className = "del";
+    del.textContent = "×";
+    del.title = "Eliminar signo";
+    del.addEventListener("click", event => {
+      event.stopPropagation();
+      dataset.delete(label);
+      if (selectedLabel === label) {
+        selectedLabel = null;
+        recordBtn.disabled = true;
+      }
+      renderLabels();
+    });
+
+    row.append(name, count, del);
+    row.addEventListener("click", () => {
+      selectedLabel = label;
+      recordBtn.disabled = false;
+      renderLabels();
+    });
+
+    labelsEl.append(row);
+  }
+}
+
+document.getElementById("addLabel").addEventListener("click", () => {
+  const input = document.getElementById("newLabel");
+  const value = input.value.trim();
+  if (value && !dataset.has(value)) {
+    dataset.set(value, []);
+    input.value = "";
+    renderLabels();
+  }
+});
+
+document.getElementById("record").addEventListener("click", startRecording);
+
+document.addEventListener("keydown", event => {
+  if (event.code === "Space" && event.target.tagName !== "INPUT") {
+    event.preventDefault();
+    startRecording();
+  }
+});
+
+const thresholdInput = document.getElementById("threshold");
+thresholdInput.addEventListener("input", () => {
+  threshold = parseFloat(thresholdInput.value);
+  document.getElementById("thrValue").textContent = threshold.toFixed(2);
+});
+
+document.getElementById("export").addEventListener("click", () => {
+  const payload = { version: 1, dimensions: 128, k: K, gestures: {} };
+  for (const [label, samples] of dataset) {
+    if (samples.length > 0) payload.gestures[label] = samples;
+  }
+
+  const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "gestures.json";
+  link.click();
+  URL.revokeObjectURL(link.href);
+});
+
+const fileInput = document.getElementById("fileInput");
+document.getElementById("import").addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", async () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  try {
+    const payload = JSON.parse(await file.text());
+    for (const [label, samples] of Object.entries(payload.gestures || {})) {
+      const existing = dataset.get(label) || [];
+      dataset.set(label, existing.concat(samples));
+    }
+    renderLabels();
+    statusEl.textContent = `Cargado: ${file.name}`;
+  } catch (error) {
+    statusEl.textContent = `El archivo no se ha podido leer: ${error.message}`;
+  }
+  fileInput.value = "";
+});
+
+// ---------------------------------------------------------------- arranque
+
+async function init() {
+  renderLabels();
+
+  try {
+    const vision = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+    );
+
+    landmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+        delegate: "GPU"
+      },
+      runningMode: "VIDEO",
+      numHands: 2,
+      minHandDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    statusEl.textContent = "Pidiendo acceso a la cámara…";
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480 }
+    });
+    video.srcObject = stream;
+    await video.play();
+
+    statusEl.textContent = "Listo";
+    loop();
+  } catch (error) {
+    statusEl.textContent = `No se ha podido arrancar: ${error.message}`;
+    predictionEl.textContent = "sin cámara";
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>

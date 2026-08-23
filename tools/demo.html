@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Videoportero accesible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #E9ECF2;
+    --surface: #FFFFFF;
+    --ink: #171A21;
+    --muted: #5C6575;
+    --line: #C9D0DB;
+    --accent: #5B3DF5;
+    --signal: #0E9E8C;
+    --alert: #D2374F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Archivo", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  header {
+    max-width: 1400px;
+    margin: 0 auto 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  header h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+
+  #conn {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #conn .led {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--line);
+  }
+  #conn.online .led { background: var(--signal); }
+
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px;
+  }
+
+  .panel + .panel { margin-top: 18px; }
+
+  .panel h2 {
+    font-size: 13px; font-weight: 700; margin: 0 0 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  /* ---------------- cámara ---------------- */
+
+  .door-top { display: grid; grid-template-columns: 320px 1fr; gap: 18px; }
+
+  #stage {
+    position: relative;
+    background: #0B0D12;
+    border-radius: 3px;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+  }
+
+  #video, #overlay {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    transform: scaleX(-1);
+  }
+  #video { object-fit: cover; }
+
+  #signLive {
+    position: absolute;
+    left: 10px; bottom: 10px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 20px; font-weight: 600;
+    color: #37F0C2;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+  }
+
+  /* ---------------- modalidades ---------------- */
+
+  .modes { display: flex; gap: 8px; margin-bottom: 14px; }
+
+  .mode {
+    flex: 1;
+    padding: 14px 10px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--surface);
+    cursor: pointer;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .mode .glyph { display: block; font-size: 26px; line-height: 1.2; }
+
+  .mode.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, white);
+  }
+
+  .mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------------- buffer de signos ---------------- */
+
+  #buffer {
+    min-height: 54px;
+    border: 1px dashed var(--line);
+    border-radius: 3px;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-content: flex-start;
+    margin-bottom: 10px;
+  }
+
+  #buffer:empty::before {
+    content: "Haz un signo frente a la cámara";
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .chip {
+    background: var(--ink);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 2px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* ---------------- transcripción ---------------- */
+
+  #feed {
+    max-height: 340px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #feed:empty::before {
+    content: "La conversación aparecerá aquí en texto, sea cual sea la modalidad.";
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .turn { display: grid; grid-template-columns: 96px 1fr; gap: 12px; }
+
+  .turn .who {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 4px;
+  }
+
+  .turn .what { font-size: 17px; }
+
+  .turn.assistant .what { font-weight: 600; }
+  .turn.visitor .who { color: var(--accent); }
+  .turn.system .what { color: var(--signal); font-weight: 600; }
+
+  /* ---------------- residente ---------------- */
+
+  #pending:empty::before {
+    content: "Sin peticiones.";
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .request {
+    border: 2px solid var(--alert);
+    border-radius: 3px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .request .title { font-weight: 700; font-size: 16px; }
+  .request .reason { color: var(--muted); font-size: 14px; margin: 4px 0 12px; }
+  .request .actions { display: flex; gap: 8px; }
+
+  #doorState {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 3px;
+    text-align: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    background: var(--paper);
+    color: var(--muted);
+  }
+
+  #doorState.open { background: var(--signal); color: #fff; }
+
+  /* ---------------- controles ---------------- */
+
+  button {
+    font-family: "Archivo", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 2px;
+    border: 1px solid var(--ink);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled) { background: var(--ink); color: var(--surface); }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { background: #4A2FD8; }
+
+  button.danger { background: var(--alert); border-color: var(--alert); color: #fff; }
+  button.danger:hover:not(:disabled) { background: #B02B41; }
+
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+
+  input[type="text"] {
+    font-family: "Archivo", sans-serif;
+    font-size: 15px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    width: 100%;
+  }
+
+  .hidden { display: none !important; }
+
+  #log {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--muted);
+    max-height: 130px;
+    overflow-y: auto;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 1100px) {
+    main { grid-template-columns: 1fr; }
+    .door-top { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="eyebrow">Prueba de concepto</div>
+    <h1>Videoportero accesible</h1>
+  </div>
+  <div id="conn"><span class="led"></span><span id="connText">Desconectado</span></div>
+</header>
+
+<main>
+  <!-- ================= PUERTA ================= -->
+  <div>
+    <section class="panel">
+      <h2>
+        <span>Puerta</span>
+        <span class="eyebrow" id="sessionState">en espera</span>
+      </h2>
+
+      <div class="door-top">
+        <div id="stage">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <div id="signLive"></div>
+        </div>
+
+        <div>
+          <div class="modes">
+            <div class="mode" id="modeVoice" role="button" tabindex="0">
+              <span class="glyph">🎙</span>Hablar
+            </div>
+            <div class="mode" id="modeSign" role="button" tabindex="0">
+              <span class="glyph">✋</span>Signos
+            </div>
+            <div class="mode" id="modeText" role="button" tabindex="0">
+              <span class="glyph">⌨</span>Escribir
+            </div>
+          </div>
+
+          <div id="signArea" class="hidden">
+            <div id="buffer"></div>
+            <div class="row">
+              <button id="sendSigns" class="primary">Enviar</button>
+              <button id="clearSigns" style="flex:0 0 auto">Borrar</button>
+            </div>
+          </div>
+
+          <div id="textArea" class="hidden">
+            <input type="text" id="textInput" placeholder="Escribe tu mensaje y pulsa Enter">
+          </div>
+
+          <div id="voiceArea" class="hidden">
+            <p style="color:var(--muted);font-size:14px;margin:0">
+              El micrófono está abierto. Habla con normalidad y haz una pausa al terminar.
+            </p>
+          </div>
+
+          <div class="row" style="margin-top:14px">
+            <button id="call" class="primary">Llamar</button>
+            <button id="hangup" class="danger" disabled>Colgar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Conversación</h2>
+      <div id="feed"></div>
+    </section>
+  </div>
+
+  <!-- ================= RESIDENTE ================= -->
+  <div>
+    <section class="panel">
+      <h2>Residente</h2>
+      <div id="pending"></div>
+      <div id="doorState">PUERTA CERRADA</div>
+    </section>
+
+    <section class="panel">
+      <h2>Sistema</h2>
+      <div class="row">
+        <button id="loadGestures">Cargar gestures.json</button>
+      </div>
+      <input type="file" id="gestureFile" accept="application/json" hidden>
+      <div id="log"></div>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+// ================================================================ configuración
+
+const WS_URL = "ws://localhost:8080/portero";
+const API_URL = "http://localhost:8080";
+const SAMPLE_RATE = 16000;
+
+const K = 5;
+const SIGN_THRESHOLD = 0.9;      // mismo umbral que en el entrenador
+const SMOOTHING_FRAMES = 8;
+const SMOOTHING_REQUIRED = 6;
+const SIGN_COOLDOWN_MS = 1200;   // evita que un signo sostenido se repita
+
+const CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17]
+];
+
+// ================================================================ estado
+
+let ws = null;
+let sessionActive = false;
+let mode = "voice";
+
+let landmarker = null;
+let lastVideoTime = -1;
+const dataset = new Map();
+const voteBuffer = [];
+let lastCommitted = null;
+let lastCommitAt = 0;
+const signBuffer = [];
+
+let audioContext = null;
+let micNode = null;
+let micStream = null;
+let micMuted = false;
+
+// ================================================================ elementos
+
+const video = document.getElementById("video");
+const overlay = document.getElementById("overlay");
+const ctx = overlay.getContext("2d");
+const signLive = document.getElementById("signLive");
+const feed = document.getElementById("feed");
+const bufferEl = document.getElementById("buffer");
+const pendingEl = document.getElementById("pending");
+const doorState = document.getElementById("doorState");
+const logEl = document.getElementById("log");
+const connEl = document.getElementById("conn");
+const connText = document.getElementById("connText");
+const sessionState = document.getElementById("sessionState");
+const callBtn = document.getElementById("call");
+const hangupBtn = document.getElementById("hangup");
+const textInput = document.getElementById("textInput");
+
+function log(message) {
+  const line = document.createElement("div");
+  line.textContent = `${new Date().toLocaleTimeString()} ${message}`;
+  logEl.prepend(line);
+}
+
+// ================================================================ modalidades
+
+const MODES = {
+  voice: { button: "modeVoice", area: "voiceArea" },
+  sign:  { button: "modeSign",  area: "signArea" },
+  text:  { button: "modeText",  area: "textArea" }
+};
+
+function setMode(next) {
+  mode = next;
+  for (const [name, refs] of Object.entries(MODES)) {
+    document.getElementById(refs.button).classList.toggle("active", name === next);
+    document.getElementById(refs.area).classList.toggle("hidden", name !== next);
+  }
+  updateMicState();
+  if (next === "text") textInput.focus();
+}
+
+for (const [name, refs] of Object.entries(MODES)) {
+  const element = document.getElementById(refs.button);
+  element.addEventListener("click", () => setMode(name));
+  element.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      setMode(name);
+    }
+  });
+}
+
+// ================================================================ signos
+
+function normalizeHand(landmarks) {
+  const wrist = landmarks[0];
+  const relative = [];
+  let maxNorm = 0;
+
+  for (const point of landmarks) {
+    const x = point.x - wrist.x;
+    const y = point.y - wrist.y;
+    const z = point.z - wrist.z;
+    relative.push([x, y, z]);
+    const norm = Math.hypot(x, y, z);
+    if (norm > maxNorm) maxNorm = norm;
+  }
+
+  if (maxNorm === 0) maxNorm = 1;
+
+  const flat = [];
+  for (const [x, y, z] of relative) {
+    flat.push(x / maxNorm, y / maxNorm, z / maxNorm);
+  }
+  return flat;
+}
+
+function buildFeatureVector(result) {
+  const right = new Array(63).fill(0);
+  const left = new Array(63).fill(0);
+  let hasRight = 0;
+  let hasLeft = 0;
+
+  for (let i = 0; i < result.landmarks.length; i++) {
+    const normalized = normalizeHand(result.landmarks[i]);
+    const handedness = result.handedness[i]?.[0]?.categoryName;
+
+    if (handedness === "Right") {
+      for (let j = 0; j < 63; j++) right[j] = normalized[j];
+      hasRight = 1;
+    } else {
+      for (let j = 0; j < 63; j++) left[j] = normalized[j];
+      hasLeft = 1;
+    }
+  }
+
+  return [...right, ...left, hasRight, hasLeft];
+}
+
+function distance(a, b) {
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) {
+    const diff = a[i] - b[i];
+    sum += diff * diff;
+  }
+  return Math.sqrt(sum);
+}
+
+function classify(vector) {
+  const neighbours = [];
+  for (const [label, samples] of dataset) {
+    for (const sample of samples) {
+      neighbours.push({ label, dist: distance(vector, sample) });
+    }
+  }
+  if (neighbours.length === 0) return null;
+
+  neighbours.sort((a, b) => a.dist - b.dist);
+  const top = neighbours.slice(0, K);
+
+  const votes = new Map();
+  for (const item of top) votes.set(item.label, (votes.get(item.label) || 0) + 1);
+
+  let best = null;
+  let bestVotes = 0;
+  for (const [label, count] of votes) {
+    if (count > bestVotes) { best = label; bestVotes = count; }
+  }
+
+  const matching = top.filter(item => item.label === best);
+  const meanDist = matching.reduce((acc, item) => acc + item.dist, 0) / matching.length;
+
+  return { label: best, accepted: meanDist <= SIGN_THRESHOLD };
+}
+
+function smooth(guess) {
+  voteBuffer.push(guess && guess.accepted ? guess.label : null);
+  if (voteBuffer.length > SMOOTHING_FRAMES) voteBuffer.shift();
+
+  const counts = new Map();
+  for (const vote of voteBuffer) {
+    if (vote === null) continue;
+    counts.set(vote, (counts.get(vote) || 0) + 1);
+  }
+  for (const [label, count] of counts) {
+    if (count >= SMOOTHING_REQUIRED) return label;
+  }
+  return null;
+}
+
+function commitSign(label) {
+  const now = performance.now();
+  if (label === lastCommitted && now - lastCommitAt < SIGN_COOLDOWN_MS) return;
+
+  lastCommitted = label;
+  lastCommitAt = now;
+  signBuffer.push(label);
+  renderBuffer();
+}
+
+function renderBuffer() {
+  bufferEl.innerHTML = "";
+  for (const label of signBuffer) {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.textContent = label;
+    bufferEl.append(chip);
+  }
+}
+
+document.getElementById("clearSigns").addEventListener("click", () => {
+  signBuffer.length = 0;
+  lastCommitted = null;
+  renderBuffer();
+});
+
+document.getElementById("sendSigns").addEventListener("click", () => {
+  if (signBuffer.length === 0) return;
+  sendText(signBuffer.join(" "));
+  signBuffer.length = 0;
+  lastCommitted = null;
+  renderBuffer();
+});
+
+// ================================================================ dibujo y bucle
+
+function draw(result) {
+  overlay.width = video.videoWidth || 640;
+  overlay.height = video.videoHeight || 480;
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+  ctx.strokeStyle = "#37F0C2";
+  ctx.lineWidth = 2.5;
+  ctx.fillStyle = "#FFFFFF";
+
+  for (const landmarks of result.landmarks) {
+    for (const [from, to] of CONNECTIONS) {
+      ctx.beginPath();
+      ctx.moveTo(landmarks[from].x * overlay.width, landmarks[from].y * overlay.height);
+      ctx.lineTo(landmarks[to].x * overlay.width, landmarks[to].y * overlay.height);
+      ctx.stroke();
+    }
+    for (const point of landmarks) {
+      ctx.beginPath();
+      ctx.arc(point.x * overlay.width, point.y * overlay.height, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function loop() {
+  if (landmarker && video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+    lastVideoTime = video.currentTime;
+    const result = landmarker.detectForVideo(video, performance.now());
+    draw(result);
+
+    if (result.landmarks.length > 0 && dataset.size > 0) {
+      const guess = classify(buildFeatureVector(result));
+      const stable = smooth(guess);
+      signLive.textContent = stable || "";
+      if (stable && mode === "sign" && sessionActive) commitSign(stable);
+    } else {
+      smooth(null);
+      signLive.textContent = "";
+    }
+  }
+  requestAnimationFrame(loop);
+}
+
+// ================================================================ micrófono
+
+async function startMic() {
+  if (audioContext) return;
+
+  micStream = await navigator.mediaDevices.getUserMedia({
+    audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
+  });
+
+  // Pedimos 16 kHz directamente al AudioContext para no tener que remuestrear.
+  audioContext = new AudioContext({ sampleRate: SAMPLE_RATE });
+  const source = audioContext.createMediaStreamSource(micStream);
+
+  // ScriptProcessor está obsoleto pero es la vía más corta para obtener PCM
+  // crudo, y para una demo local funciona sin problemas en Chrome.
+  micNode = audioContext.createScriptProcessor(1024, 1, 1);
+
+  micNode.onaudioprocess = event => {
+    if (!sessionActive || micMuted || mode !== "voice") return;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    const input = event.inputBuffer.getChannelData(0);
+    const pcm = new Int16Array(input.length);
+    for (let i = 0; i < input.length; i++) {
+      const clamped = Math.max(-1, Math.min(1, input[i]));
+      pcm[i] = clamped * 32767;
+    }
+    ws.send(pcm.buffer);
+  };
+
+  source.connect(micNode);
+  micNode.connect(audioContext.destination);
+  log(`Micrófono a ${audioContext.sampleRate} Hz`);
+}
+
+function updateMicState() {
+  micMuted = mode !== "voice";
+}
+
+// ================================================================ voz de salida
+
+let spanishVoice = null;
+
+function pickVoice() {
+  const voices = speechSynthesis.getVoices();
+  spanishVoice = voices.find(v => v.lang.startsWith("es")) || null;
+}
+
+speechSynthesis.addEventListener("voiceschanged", pickVoice);
+pickVoice();
+
+function speak(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  if (spanishVoice) utterance.voice = spanishVoice;
+  utterance.lang = "es-ES";
+  utterance.rate = 1.05;
+
+  // Silenciamos el micrófono mientras habla el asistente para no transcribirnos
+  // a nosotros mismos.
+  micMuted = true;
+  utterance.onend = () => { micMuted = mode !== "voice"; };
+  utterance.onerror = () => { micMuted = mode !== "voice"; };
+
+  speechSynthesis.speak(utterance);
+}
+
+// ================================================================ transcripción
+
+function addTurn(role, text) {
+  const turn = document.createElement("div");
+  turn.className = `turn ${role}`;
+
+  const who = document.createElement("div");
+  who.className = "who";
+  who.textContent = role === "visitor" ? "Visitante"
+                  : role === "assistant" ? "Portero" : "Sistema";
+
+  const what = document.createElement("div");
+  what.className = "what";
+  what.textContent = text;
+
+  turn.append(who, what);
+  feed.append(turn);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+// ================================================================ WebSocket
+
+function sendText(content) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ type: "text", content }));
+}
+
+textInput.addEventListener("keydown", event => {
+  if (event.key !== "Enter") return;
+  const value = textInput.value.trim();
+  if (!value) return;
+  sendText(value);
+  textInput.value = "";
+});
+
+function startSession() {
+  if (sessionActive) return;
+
+  feed.innerHTML = "";
+  ws = new WebSocket(WS_URL);
+  ws.binaryType = "arraybuffer";
+
+  ws.addEventListener("open", () => {
+    sessionActive = true;
+    connEl.classList.add("online");
+    connText.textContent = "Conectado";
+    sessionState.textContent = "en conversación";
+    callBtn.disabled = true;
+    hangupBtn.disabled = false;
+    startMic().catch(error => log(`Micrófono: ${error.message}`));
+  });
+
+  ws.addEventListener("message", event => {
+    if (typeof event.data !== "string") return;  // audio del servidor: no se usa
+
+    const payload = JSON.parse(event.data);
+
+    if (payload.type === "transcript") {
+      addTurn(payload.role, payload.content);
+      if (payload.role === "assistant") speak(payload.content);
+
+    } else if (payload.type === "open_door") {
+      doorState.classList.add("open");
+      doorState.textContent = "PUERTA ABIERTA";
+      addTurn("system", "La puerta se ha abierto.");
+      setTimeout(() => {
+        doorState.classList.remove("open");
+        doorState.textContent = "PUERTA CERRADA";
+      }, 6000);
+
+    } else if (payload.type === "bye") {
+      endSession();
+    }
+  });
+
+  ws.addEventListener("close", endSession);
+  ws.addEventListener("error", () => log("Error de WebSocket"));
+}
+
+function endSession() {
+  sessionActive = false;
+  connEl.classList.remove("online");
+  connText.textContent = "Desconectado";
+  sessionState.textContent = "en espera";
+  callBtn.disabled = false;
+  hangupBtn.disabled = true;
+}
+
+callBtn.addEventListener("click", startSession);
+
+hangupBtn.addEventListener("click", () => {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: "hangup" }));
+  }
+  endSession();
+});
+
+// ================================================================ residente
+
+async function pollPending() {
+  try {
+    const response = await fetch(`${API_URL}/pending`);
+    const requests = await response.json();
+    renderPending(requests);
+  } catch {
+    // El servidor puede no estar levantado todavía; no ensuciamos el log.
+  }
+}
+
+function renderPending(requests) {
+  pendingEl.innerHTML = "";
+
+  for (const request of requests) {
+    const card = document.createElement("div");
+    card.className = "request";
+
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = `¿Abrir a ${request.visitante}?`;
+
+    const reason = document.createElement("div");
+    reason.className = "reason";
+    reason.textContent = request.motivo;
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const approve = document.createElement("button");
+    approve.className = "primary";
+    approve.textContent = "Abrir";
+    approve.addEventListener("click", () => resolve(request.id, "approve"));
+
+    const deny = document.createElement("button");
+    deny.textContent = "Denegar";
+    deny.addEventListener("click", () => resolve(request.id, "deny"));
+
+    actions.append(approve, deny);
+    card.append(title, reason, actions);
+    pendingEl.append(card);
+  }
+}
+
+async function resolve(id, action) {
+  try {
+    await fetch(`${API_URL}/pending/${id}/${action}`, { method: "POST" });
+    log(`Petición ${id}: ${action}`);
+  } catch (error) {
+    log(`No se pudo responder: ${error.message}`);
+  }
+  pollPending();
+}
+
+setInterval(pollPending, 1200);
+
+// ================================================================ gestos
+
+async function loadGestures(payload, origin) {
+  dataset.clear();
+  for (const [label, samples] of Object.entries(payload.gestures || {})) {
+    dataset.set(label, samples);
+  }
+  log(`Signos cargados desde ${origin}: ${[...dataset.keys()].join(", ")}`);
+}
+
+const gestureFile = document.getElementById("gestureFile");
+document.getElementById("loadGestures").addEventListener("click", () => gestureFile.click());
+
+gestureFile.addEventListener("change", async () => {
+  const file = gestureFile.files[0];
+  if (!file) return;
+  try {
+    await loadGestures(JSON.parse(await file.text()), file.name);
+  } catch (error) {
+    log(`No se pudo leer el archivo: ${error.message}`);
+  }
+  gestureFile.value = "";
+});
+
+// ================================================================ arranque
+
+async function init() {
+  setMode("voice");
+
+  // Intento de carga automática: si gestures.json está junto a esta página.
+  try {
+    const response = await fetch("gestures.json");
+    if (response.ok) await loadGestures(await response.json(), "gestures.json");
+  } catch {
+    log("No hay gestures.json en la carpeta. Cárgalo a mano.");
+  }
+
+  try {
+    const vision = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+    );
+
+    landmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+        delegate: "GPU"
+      },
+      runningMode: "VIDEO",
+      numHands: 2,
+      minHandDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+    video.srcObject = stream;
+    await video.play();
+    log("Cámara lista");
+    loop();
+  } catch (error) {
+    log(`Cámara o MediaPipe: ${error.message}`);
+  }
+
+  pollPending();
+}
+
+init();
+</script>
+
+</body>
+</html>

@@ -17,6 +17,8 @@ log = logging.getLogger(__name__)
 
 def synthesize(text: str) -> bytes:
     """Devuelve PCM de 16 bits mono a config.SAMPLE_RATE. Bloqueante: llamar en un hilo."""
+    if not config.TTS_ENABLED:
+        return b"" # la voz la genera el navegador con speechSynthesis
     if not text.strip():
         return b""
 

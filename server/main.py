@@ -22,6 +22,15 @@ log = logging.getLogger("videoportero")
 
 app = FastAPI(title="Videoportero accesible")
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # demo local: cap risc real
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Una sola conversación a la vez: hay un solo portero y una sola GPU.
 _session_lock = asyncio.Lock()
 

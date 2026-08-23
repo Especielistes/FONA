@@ -15,13 +15,14 @@ FRAME_MS = 20  # webrtcvad solo acepta 10, 20 o 30 ms
 # --- STT (faster-whisper) ---
 STT_MODEL = os.getenv("STT_MODEL", "medium")  # "small" pierde nombres propios con ruido
 STT_DEVICE = os.getenv("STT_DEVICE", "cuda")  # "cpu" si no hay GPU
-STT_COMPUTE = os.getenv("STT_COMPUTE", "float16")  # "int8" en CPU
+STT_COMPUTE = os.getenv("STT_COMPUTE", "int8_float16")
 LANGUAGE = "es"
 
 # --- TTS (Piper) ---
 PIPER_BIN = os.getenv("PIPER_BIN", "piper")
 PIPER_MODEL = os.getenv("PIPER_MODEL", "./voices/es_ES-davefx-medium.onnx")
 PIPER_SAMPLE_RATE = 22050  # depende del modelo: comprobar en el .onnx.json
+TTS_ENABLED = os.getenv("TTS_ENABLED", "0") == "1"
 
 # --- LLM (Ollama) ---
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
