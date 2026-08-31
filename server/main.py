@@ -80,6 +80,17 @@ async def portero(ws: WebSocket) -> None:
 LATEST_FRAME: str | None = None
 
 
+class FramePayload(BaseModel):
+    image: str
+
+
+@app.post("/camera/frame")
+async def save_camera_frame(payload: FramePayload):
+    global LATEST_FRAME
+    LATEST_FRAME = payload.image
+    return {"status": "ok"}
+
+
 @app.get("/camera/frame")
 async def get_camera_frame():
     return {"image": LATEST_FRAME}
