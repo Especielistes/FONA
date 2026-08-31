@@ -146,14 +146,22 @@ function setMode(modeName) {
   }
 
   if (modeName === "sign") {
-    signRecognizer?.start();
-    stopMic(); // Evitar que el ruido ambiente interfiera mientras hace signos
+    stopMic(); // Desactivar micrófono al hacer signos
+    if (!stream) {
+      startCamera(video).then(() => {
+        video?.play().catch(() => {});
+        signRecognizer?.start();
+      });
+    } else {
+      video?.play().catch(() => {});
+      signRecognizer?.start();
+    }
   } else {
     signRecognizer?.stop();
   }
 
   if (modeName === "text") {
-    stopMic(); // Evitar ruido ambiente en modo texto
+    stopMic(); // Desactivar micrófono al escribir
     setTimeout(() => {
       textInput?.focus();
     }, 50);

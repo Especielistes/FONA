@@ -25,12 +25,12 @@ body.street {
 .camera {
   position: relative;
   isolation: isolate;
-  aspect-ratio: 9/12;
-  max-height: 520px;
+  aspect-ratio: 4/3;
+  max-height: 360px;
   overflow: hidden;
   background: #111;
-  border-bottom-left-radius: 24px;
-  border-bottom-right-radius: 24px;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
 }
 
 .camera video,
@@ -144,12 +144,12 @@ body.street {
 }
 
 .feed {
-  height: 160px;
+  max-height: 120px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   padding-right: 4px;
 }
 
