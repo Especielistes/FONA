@@ -325,23 +325,24 @@ let snapshotTimer = null;
 async function sendCameraSnapshot() {
   if (!video) return;
 
-  if (video.readyState < 2) {
+  if (video.paused) {
     try {
       await video.play();
     } catch {}
   }
 
-  if (video.readyState < 2) return;
+  const width = video.videoWidth || 320;
+  const height = video.videoHeight || 240;
 
   try {
     const canvas = document.createElement("canvas");
-    canvas.width = 320;
-    canvas.height = 240;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const frameDataUrl = canvas.toDataURL("image/jpeg", 0.4);
 
-    const res = await fetch(`${API_URL}/camera/frame`, {
+    await fetch(`${API_URL}/camera/frame`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ image: frameDataUrl }),

@@ -185,6 +185,15 @@ async def solicitar_apertura(ctx: dict, visitante: str, motivo: str) -> str:
         await asyncio.wait_for(request.event.wait(), timeout=config.DOOR_CONFIRM_TIMEOUT_S)
     except asyncio.TimeoutError:
         PENDING.pop(request.id, None)
+        if ws is not None:
+            try:
+                await ws.send_text(json.dumps({
+                    "type": "transcript",
+                    "role": "system",
+                    "content": "Sin respuesta del residente.",
+                }, ensure_ascii=False))
+            except Exception:
+                pass
         return "Sin respuesta del residente. La puerta NO se ha abierto."
 
     PENDING.pop(request.id, None)
