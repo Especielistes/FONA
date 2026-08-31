@@ -53,25 +53,46 @@ def schemas() -> list[dict]:
     return [entry["schema"] for entry in REGISTRY.values()]
 
 
-async def execute(name: str, arguments: dict, ctx: dict) -> tuple[str, bool]:
+async def execute(name: str, arguments: dict | str, ctx: dict) -> tuple[str, bool]:
     """Ejecuta una herramienta. Devuelve (resultado_textual, hay_que_terminar_sesion)."""
     entry = REGISTRY.get(name)
     if entry is None:
         log.warning("El modelo ha pedido una herramienta inexistente: %s", name)
         return f"Error: la herramienta '{name}' no existe.", False
 
+    # 1. Asegurar que los argumentos sean un diccionario Python
+    if isinstance(arguments, str):
+        try:
+            arguments = json.loads(arguments)
+        except Exception:
+            arguments = {}
+
+    if not isinstance(arguments, dict):
+        arguments = {}
+
+    # 2. Si vienen anidados en 'parameters'
+    if "parameters" in arguments and isinstance(arguments["parameters"], dict):
+        arguments = arguments["parameters"]
+
+    # 3. Invocar la función de forma limpia
+    fn = entry["fn"]
     try:
         kwargs = dict(arguments)
         kwargs["ctx"] = ctx
-        result = await entry["fn"](**kwargs)
+        result = await fn(**kwargs)
     except TypeError:
         try:
-            # Reintentar sin ctx si la función no lo requiere
             kwargs.pop("ctx", None)
-            result = await entry["fn"](**kwargs)
+            result = await fn(**kwargs)
         except Exception as exc:
-            log.warning("Argumentos incorrectos para %s: %s", name, exc)
-            return f"Error de argumentos: {exc}", False
+            log.warning("Error de argumentos en %s (%s): %s", name, arguments, exc)
+            # Fallback seguro para solicitar_apertura y notificar_residente
+            visitante = str(arguments.get("visitante") or arguments.get("name") or "Visitante")
+            motivo = str(arguments.get("motivo") or arguments.get("reason") or "Desea entrar")
+            try:
+                result = await fn(ctx=ctx, visitante=visitante, motivo=motivo)
+            except Exception:
+                return f"Error de argumentos: {exc}", False
     except Exception as exc:
         log.exception("Error ejecutando %s", name)
         return f"Error interno ejecutando la herramienta: {exc}", False
