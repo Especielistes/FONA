@@ -113,6 +113,16 @@
   margin-bottom: 16px;
 }
 
+.request-avatar {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #B2DDFF;
+  margin-bottom: 12px;
+  display: block;
+}
+
 .request strong {
   display: block;
   font-size: 17px;
