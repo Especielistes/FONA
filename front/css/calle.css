@@ -185,6 +185,10 @@ body.street {
   border-left: 3px solid #6b7280;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .input {
   margin: 8px 0;
 }

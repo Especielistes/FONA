@@ -24,9 +24,9 @@
     </div>
   </header>
 
-  <main class="house">
+  <main class="house-simplified">
     
-    <!-- Panel Cámara Exterior -->
+    <!-- Panel Cámara Exterior Calle -->
     <section class="panel camera-panel">
       <h2>Cámara Exterior Calle</h2>
       <div class="house-camera" id="cameraBox">
@@ -36,38 +36,24 @@
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
             <circle cx="12" cy="13" r="4"/>
           </svg>
-          <p>Esperando señal de cámara exterior...</p>
+          <p>Cámara de calle</p>
         </div>
       </div>
     </section>
 
-    <!-- Panel Peticiones y Control de Puerta -->
+    <!-- Panel Peticiones de Apertura y Estado de Puerta -->
     <section class="panel pending-panel">
       <div class="title">
         <h2>Solicitudes de Apertura</h2>
         <span id="count" class="badge-count">0</span>
       </div>
+      
       <div id="pending" class="pending-list"></div>
-      <div id="doorState" class="door">PUERTA CERRADA</div>
-    </section>
 
-    <!-- Panel Registro de Conversación -->
-    <section class="panel conversation-panel">
-      <div class="title">
-        <h2>Registro de Diálogo</h2>
-        <button id="clearConversation" class="btn-subtle" type="button">Limpiar</button>
+      <div class="door-status-box">
+        <span class="door-label">Estado de la cerradura:</span>
+        <div id="doorState" class="door">PUERTA CERRADA</div>
       </div>
-      <div id="conversation" class="conversation"></div>
-    </section>
-
-    <!-- Panel Acciones y Sistema -->
-    <section class="panel system-panel">
-      <h2>Gestión del Sistema</h2>
-      <div class="menu">
-        <button id="reload" class="btn-secondary" type="button">Actualizar</button>
-        <button id="test" class="btn-secondary" type="button">Verificar Estado</button>
-      </div>
-      <div id="log" class="log"></div>
     </section>
 
   </main>
