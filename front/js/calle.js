@@ -209,6 +209,7 @@ async function sendSignsMessage() {
   if (!signs.length) return;
 
   const content = signs.join(" ");
+  sendCameraSnapshot();
 
   if (!socket?.isOpen()) {
     await startConversation();
@@ -359,7 +360,7 @@ async function sendCameraSnapshot() {
 function startFrameSync() {
   sendCameraSnapshot();
   if (!snapshotTimer) {
-    snapshotTimer = setInterval(sendCameraSnapshot, 2000);
+    snapshotTimer = setInterval(sendCameraSnapshot, 1000);
   }
 }
 
@@ -449,6 +450,8 @@ textForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const content = textInput?.value?.trim();
   if (!content) return;
+
+  sendCameraSnapshot();
 
   if (!socket?.isOpen()) {
     await startConversation();
