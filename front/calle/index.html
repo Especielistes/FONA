@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+  <meta
+    name="theme-color"
+    content="#0b0d12"
+  >
+  <title>FONA · Calle</title>
+
+  <link
+    rel="stylesheet"
+    href="../css/base.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="../css/calle.css"
+  >
+</head>
+
+<body class="street">
+
+<main class="street-app">
+
+  <section class="camera">
+
+    <video
+      id="video"
+      autoplay
+      playsinline
+      muted
+    ></video>
+
+    <canvas id="overlay"></canvas>
+
+    <div class="shade"></div>
+
+    <header>
+      <b>FONA</b>
+
+      <span
+        id="connection"
+        class="status"
+      >
+        <i></i>
+        <span>Sin conexión</span>
+      </span>
+    </header>
+
+    <div
+      id="liveCaption"
+      class="live"
+      aria-live="polite"
+    ></div>
+
+    <div class="modes">
+
+      <button
+        class="mode active"
+        data-mode="voice"
+        aria-label="Hablar"
+        type="button"
+      >
+        Hablar
+      </button>
+
+      <button
+        class="mode"
+        data-mode="sign"
+        aria-label="Lengua de signos"
+        type="button"
+      >
+        Signos
+      </button>
+
+      <button
+        class="mode"
+        data-mode="text"
+        aria-label="Escribir"
+        type="button"
+      >
+        Escribir
+      </button>
+
+    </div>
+
+  </section>
+
+  <section class="street-panel">
+
+    <div
+      id="feed"
+      class="feed"
+      aria-live="polite"
+    ></div>
+
+    <div
+      id="signArea"
+      class="input hidden"
+    >
+
+      <div
+        id="signBuffer"
+        class="sign-buffer"
+      >
+        Haz un signo frente a la cámara
+      </div>
+
+      <div class="row">
+
+        <button
+          id="clearSigns"
+          type="button"
+        >
+          Borrar
+        </button>
+
+        <button
+          id="sendSigns"
+          class="primary"
+          type="button"
+        >
+          Enviar
+        </button>
+
+      </div>
+
+    </div>
+
+    <form
+      id="textForm"
+      class="input hidden"
+    >
+
+      <input
+        id="textInput"
+        type="text"
+        autocomplete="off"
+        placeholder="Escribe tu mensaje..."
+      >
+
+      <button
+        class="primary"
+        type="submit"
+      >
+        Enviar
+      </button>
+
+    </form>
+
+    <div class="call-row">
+
+      <button
+        id="call"
+        type="button"
+      >
+        Llamar
+      </button>
+
+      <button
+        id="hangup"
+        type="button"
+        disabled
+      >
+        Colgar
+      </button>
+
+    </div>
+
+    <p id="state">
+      Listo para llamar
+    </p>
+
+  </section>
+
+</main>
+
+<script
+  type="module"
+  src="../js/calle.js"
+></script>
+
+</body>
+</html>

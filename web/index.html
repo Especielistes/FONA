@@ -792,13 +792,15 @@ function startSession() {
       if (payload.role === "assistant") speak(payload.content);
 
     } else if (payload.type === "open_door") {
+      log("EVENTO: open_door recibido");
       doorState.classList.add("open");
       doorState.textContent = "PUERTA ABIERTA";
       addTurn("system", "La puerta se ha abierto.");
+
       setTimeout(() => {
         doorState.classList.remove("open");
         doorState.textContent = "PUERTA CERRADA";
-      }, 6000);
+      }, 600);
 
     } else if (payload.type === "bye") {
       endSession();
@@ -843,8 +845,11 @@ function renderPending(requests) {
   pendingEl.innerHTML = "";
 
   for (const request of requests) {
+    if (request.approved !== null) continue;
+
     const card = document.createElement("div");
     card.className = "request";
+    card.dataset.requestId = request.id;
 
     const title = document.createElement("div");
     title.className = "title";
@@ -873,13 +878,36 @@ function renderPending(requests) {
 }
 
 async function resolve(id, action) {
+  const card = [...pendingEl.querySelectorAll(".request")]
+    .find(el => el.dataset.requestId === id);
+
+  if (card) card.remove();
+
   try {
-    await fetch(`${API_URL}/pending/${id}/${action}`, { method: "POST" });
+    const response = await fetch(
+      `${API_URL}/pending/${id}/${action}`,
+      { method: "POST" }
+    );
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
     log(`Petición ${id}: ${action}`);
+
+    // Vaciar siempre el panel después de contestar
+    pendingEl.innerHTML = "";
+
+    if (action === "deny") {
+      addTurn("system", "Entrada denegada.");
+    } else {
+      addTurn("system", "Apertura autorizada.");
+    }
+
+    // Comprobar una vez más, pero sin reconstruir peticiones antiguas
+    setTimeout(pollPending, 300);
+
   } catch (error) {
     log(`No se pudo responder: ${error.message}`);
   }
-  pollPending();
 }
 
 setInterval(pollPending, 1200);

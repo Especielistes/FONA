@@ -61,11 +61,18 @@ async def execute(name: str, arguments: dict, ctx: dict) -> tuple[str, bool]:
         return f"Error: la herramienta '{name}' no existe.", False
 
     try:
-        result = await entry["fn"](ctx=ctx, **arguments)
-    except TypeError as exc:
-        log.warning("Argumentos incorrectos para %s: %s", name, exc)
-        return f"Error de argumentos: {exc}", False
-    except Exception as exc:  # no queremos que una herramienta tumbe la sesión
+        kwargs = dict(arguments)
+        kwargs["ctx"] = ctx
+        result = await entry["fn"](**kwargs)
+    except TypeError:
+        try:
+            # Reintentar sin ctx si la función no lo requiere
+            kwargs.pop("ctx", None)
+            result = await entry["fn"](**kwargs)
+        except Exception as exc:
+            log.warning("Argumentos incorrectos para %s: %s", name, exc)
+            return f"Error de argumentos: {exc}", False
+    except Exception as exc:
         log.exception("Error ejecutando %s", name)
         return f"Error interno ejecutando la herramienta: {exc}", False
 
@@ -128,9 +135,7 @@ async def notificar_residente(ctx: dict, visitante: str, motivo: str) -> str:
 
 @tool(
     description=(
-        "Solicita permiso al residente para abrir la puerta. TÚ NO PUEDES abrir la "
-        "puerta: esta herramienta solo envía la petición y espera la respuesta humana. "
-        "Dile al visitante que espere un momento antes de invocarla."
+        "Solicita permiso al residente para abrir la puerta cuando el visitante se ha identificado y pide entrar."
     ),
     params={
         "visitante": {"type": "string", "description": "Nombre o descripción del visitante"},
@@ -146,7 +151,6 @@ async def solicitar_apertura(ctx: dict, visitante: str, motivo: str) -> str:
         title=f"¿Abrir la puerta a {visitante}?",
         body=motivo,
         category="apertura",
-        request_id=request.id,
     )
     
     ws = ctx.get("ws")
@@ -165,10 +169,9 @@ async def solicitar_apertura(ctx: dict, visitante: str, motivo: str) -> str:
     PENDING.pop(request.id, None)
 
     if request.approved:
-        ctx["open_door"] = True  # la sesión enviará la orden al relé
-        return "Autorizado. La puerta se ha abierto."
-
-    return "El residente lo ha denegado. La puerta NO se ha abierto."
+        ctx["open_door"] = True
+        return "Autorizado."
+    return "DENEGADO: el residente no ha autorizado la entrada. Informa al visitante de que no puede entrar."
 
 
 @tool(
