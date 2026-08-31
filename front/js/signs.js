@@ -1,10 +1,10 @@
 import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
 const K = 5;
-const SMOOTHING_FRAMES = 5;
-const SMOOTHING_REQUIRED = 3;
-const SIGN_COOLDOWN_MS = 1200; // Cooldown entre detección de la misma palabra
-const DISTANCE_THRESHOLD = 1.35; // Umbral óptimo para detección en vivo
+const SMOOTHING_FRAMES = 4;
+const SMOOTHING_REQUIRED = 2;
+const SIGN_COOLDOWN_MS = 1000; // Cooldown entre detección de la misma palabra
+const DISTANCE_THRESHOLD = 1.85; // Umbral óptimo verificado (distancia media de misma clase = 1.30)
 
 const CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
