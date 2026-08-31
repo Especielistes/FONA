@@ -142,11 +142,30 @@ function renderPending(items) {
 }
 
 
+const houseFrame = $("houseFrame");
+const cameraPlaceholder = $("cameraPlaceholder");
+
+async function pollCameraFrame() {
+  try {
+    const res = await fetch(`${API_URL}/camera/frame`, { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.image && houseFrame) {
+        houseFrame.src = data.image;
+        houseFrame.classList.remove("hidden");
+        if (cameraPlaceholder) cameraPlaceholder.classList.add("hidden");
+      }
+    }
+  } catch {}
+}
+
 /* -------------------------------------------------------------------------- */
 /* CONSULTAR BACKEND                                                           */
 /* -------------------------------------------------------------------------- */
 
 async function poll() {
+  pollCameraFrame();
+
   if (polling) {
     return;
   }
