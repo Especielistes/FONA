@@ -89,7 +89,12 @@ async def _receive_input(ws: WebSocket, detector: UtteranceDetector) -> str | No
             except json.JSONDecodeError:
                 continue
 
-            kind = payload.get("type")
+            if isinstance(payload, dict) and payload.get("image"):
+                ctx["image"] = payload["image"]
+                import main
+                main.LATEST_FRAME = payload["image"]
+
+            kind = payload.get("type") if isinstance(payload, dict) else None
             if kind == "hangup":
                 return None
             if kind == "text":

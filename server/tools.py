@@ -74,6 +74,21 @@ async def execute(name: str, arguments: dict | str, ctx: dict) -> tuple[str, boo
     if "parameters" in arguments and isinstance(arguments["parameters"], dict):
         arguments = arguments["parameters"]
 
+    # Normalizar nombres de claves ingleses/españoles para la IA
+    if name in ("solicitar_apertura", "notificar_residente"):
+        v = (
+            arguments.get("visitante") or arguments.get("visitor") or
+            arguments.get("name") or arguments.get("nombre") or
+            arguments.get("user") or arguments.get("persona") or "Visitante"
+        )
+        m = (
+            arguments.get("motivo") or arguments.get("reason") or
+            arguments.get("purpose") or arguments.get("mensaje") or
+            arguments.get("content") or arguments.get("text") or "Desea entrar"
+        )
+        arguments["visitante"] = str(v)
+        arguments["motivo"] = str(m)
+
     # 3. Invocar la función de forma limpia
     fn = entry["fn"]
     try:
@@ -86,9 +101,8 @@ async def execute(name: str, arguments: dict | str, ctx: dict) -> tuple[str, boo
             result = await fn(**kwargs)
         except Exception as exc:
             log.warning("Error de argumentos en %s (%s): %s", name, arguments, exc)
-            # Fallback seguro para solicitar_apertura y notificar_residente
-            visitante = str(arguments.get("visitante") or arguments.get("name") or "Visitante")
-            motivo = str(arguments.get("motivo") or arguments.get("reason") or "Desea entrar")
+            visitante = str(arguments.get("visitante") or "Visitante")
+            motivo = str(arguments.get("motivo") or "Desea entrar")
             try:
                 result = await fn(ctx=ctx, visitante=visitante, motivo=motivo)
             except Exception:
@@ -168,7 +182,7 @@ async def notificar_residente(ctx: dict, visitante: str, motivo: str) -> str:
 )
 async def solicitar_apertura(ctx: dict, visitante: str, motivo: str) -> str:
     import main
-    image = main.LATEST_FRAME
+    image = ctx.get("image") or main.LATEST_FRAME
     request = PendingRequest(motivo=motivo, visitante=visitante, image=image)
     PENDING[request.id] = request
 

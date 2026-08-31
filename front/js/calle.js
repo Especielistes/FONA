@@ -205,17 +205,34 @@ function addDetectedSign(sign) {
   }
 }
 
+function getSnapshotFrame() {
+  if (!video || video.videoWidth === 0) return null;
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 240;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.4);
+  } catch {
+    return null;
+  }
+}
+
 async function sendSignsMessage() {
   if (!signs.length) return;
 
   const content = signs.join(" ");
+  const image = getSnapshotFrame();
   sendCameraSnapshot();
 
   if (!socket?.isOpen()) {
     await startConversation();
     setTimeout(() => {
       if (socket?.isOpen()) {
-        socket.sendText(content);
+        const payload = { type: "text", content: content };
+        if (image) payload.image = image;
+        socket.sendText(JSON.stringify(payload));
         signs = [];
         renderSigns();
       }
@@ -223,7 +240,9 @@ async function sendSignsMessage() {
     return;
   }
 
-  socket.sendText(content);
+  const payload = { type: "text", content: content };
+  if (image) payload.image = image;
+  socket.sendText(JSON.stringify(payload));
   signs = [];
   renderSigns();
 }
@@ -451,20 +470,24 @@ textForm?.addEventListener("submit", async (event) => {
   const content = textInput?.value?.trim();
   if (!content) return;
 
+  const image = getSnapshotFrame();
   sendCameraSnapshot();
+
+  const payload = { type: "text", content: content };
+  if (image) payload.image = image;
 
   if (!socket?.isOpen()) {
     await startConversation();
     setTimeout(() => {
       if (socket?.isOpen()) {
-        socket.sendText(content);
+        socket.sendText(JSON.stringify(payload));
         textInput.value = "";
       }
     }, 500);
     return;
   }
 
-  socket.sendText(content);
+  socket.sendText(JSON.stringify(payload));
   textInput.value = "";
 });
 
