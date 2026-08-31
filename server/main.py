@@ -8,6 +8,7 @@ import logging
 
 from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 import config
 import notify
 import session
