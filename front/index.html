@@ -1,1 +1,157 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111318"><title>FONA</title><link rel="stylesheet" href="./css/base.css"></head><body class="home"><main><p class="eyebrow">FONA · Videoportero accesible</p><h1>Selecciona la pantalla</h1><div class="home-grid"><a class="home-card" href="./calle/"><b>◉</b><span><strong>Pantalla de la calle</strong><small>Visitar · hablar · signos · escribir</small></span></a><a class="home-card" href="./casa/"><b>⌂</b><span><strong>Pantalla de casa</strong><small>Cámara · conversación · peticiones</small></span></a></div></main></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#004F9F">
+  <title>FERMAX FONA · Videoportero Accesible</title>
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="home-page">
+
+  <!-- Header Institucional FERMAX -->
+  <header class="navbar">
+    <div class="navbar-container">
+      <div class="brand">
+        <span class="brand-logo">FERMAX</span>
+        <span class="brand-divider">|</span>
+        <span class="brand-sub">FONA IA</span>
+      </div>
+      <div class="badge-status">
+        <span class="pulse-dot"></span>
+        <span>Sistema Operativo</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal -->
+  <main class="main-container">
+    
+    <!-- Hero Header -->
+    <section class="hero-section">
+      <div class="hero-tag">TECNOLOGÍA DE ACCESIBILIDAD UNIVERSAL</div>
+      <h1 class="hero-title">Videoportero Accesible con IA</h1>
+      <p class="hero-description">
+        Plataforma inteligente de comunicación accesible para viviendas y edificios. 
+        Facilita la interacción autónoma mediante voz, reconocimiento de lengua de signos por visión artificial y texto accesible.
+      </p>
+    </section>
+
+    <!-- Rejilla de Módulos Principal -->
+    <section class="portal-grid">
+      
+      <!-- Card 1: Calle -->
+      <a href="./calle/" class="portal-card card-calle">
+        <div class="card-header">
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+            </svg>
+          </div>
+          <span class="card-pill">Placa Exterior</span>
+        </div>
+        <div class="card-body">
+          <h2 class="card-title">Pantalla de la Calle</h2>
+          <p class="card-text">
+            Interfaz táctil accesible para visitantes. Permite comunicarse por voz, lengua de signos mediante cámara en tiempo real o mediante mensajes de texto plano.
+          </p>
+        </div>
+        <div class="card-footer">
+          <span class="btn-action">Abrir Placa Calle &rarr;</span>
+        </div>
+      </a>
+
+      <!-- Card 2: Casa -->
+      <a href="./casa/" class="portal-card card-casa">
+        <div class="card-header">
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <span class="card-pill">Monitor Vivienda</span>
+        </div>
+        <div class="card-body">
+          <h2 class="card-title">Pantalla de Casa</h2>
+          <p class="card-text">
+            Consola del residente para recepción de visitas, visualización de solicitudes de acceso en vivo y control de apertura remota con autorización en un clic.
+          </p>
+        </div>
+        <div class="card-footer">
+          <span class="btn-action">Abrir Monitor Casa &rarr;</span>
+        </div>
+      </a>
+
+    </section>
+
+    <!-- Panel Informativo del Proyecto FONA -->
+    <section class="info-section">
+      <div class="info-header">
+        <div class="info-title-group">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#004F9F" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <h2>Información del Proyecto FONA</h2>
+        </div>
+        <span class="info-badge">PROTOTIPO FERMAX IA</span>
+      </div>
+
+      <div class="info-content">
+        <p class="info-intro">
+          <strong>FONA</strong> es un prototipo de videoportero accesible impulsado por Inteligencia Artificial que elimina las barreras de comunicación tradicionales en el acceso a viviendas para personas sordas, con discapacidad auditiva, del habla o motora.
+        </p>
+
+        <div class="info-features">
+          <div class="feature-item">
+            <div class="feature-icon">🖐️</div>
+            <div>
+              <h3>Reconocimiento de Lengua de Signos</h3>
+              <p>Detección de manos con visión artificial (MediaPipe) y clasificación gestual k-NN en tiempo real sin requerir hardware especial.</p>
+            </div>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">🎙️</div>
+            <div>
+              <h3>Interacción Multimodal por Voz</h3>
+              <p>Transcripción rápida mediante Whisper y procesamiento de lenguaje natural con IA para atender de manera fluida a los visitantes.</p>
+            </div>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">🔒</div>
+            <div>
+              <h3>Autorización y Seguridad Garantizada</h3>
+              <p>El asistente de IA consulta y solicita permiso de acceso al residente, quien siempre mantiene el control total de la puerta.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque reservado para el texto completo que pasará el usuario -->
+        <div class="info-custom-block">
+          <div class="custom-block-header">
+            <span>DOCUMENTACIÓN DETALLADA DEL PROYECTO</span>
+          </div>
+          <div class="custom-block-body" id="customProjectInfo">
+            <p><em>Este panel está preparado para incluir la información detallada completa del proyecto. Pásame tu texto cuando lo desees para integrarlo aquí.</em></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 FERMAX · Proyecto FONA · Videoportería Accesible con IA</p>
+  </footer>
+
+</body>
+</html>
