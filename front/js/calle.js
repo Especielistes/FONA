@@ -320,6 +320,42 @@ async function stopMic() {
 /* CICLO DE CONVERSACIÓN                                                       */
 /* -------------------------------------------------------------------------- */
 
+let snapshotTimer = null;
+
+async function sendCameraSnapshot() {
+  if (!video || video.readyState < 2) return;
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 320;
+    canvas.height = 240;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const frameDataUrl = canvas.toDataURL("image/jpeg", 0.4);
+
+    await fetch(`${API_URL}/camera/frame`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: frameDataUrl }),
+    });
+  } catch (err) {
+    console.warn("No se pudo enviar fotograma de cámara:", err);
+  }
+}
+
+function startFrameSync() {
+  sendCameraSnapshot();
+  if (!snapshotTimer) {
+    snapshotTimer = setInterval(sendCameraSnapshot, 2000);
+  }
+}
+
+function stopFrameSync() {
+  if (snapshotTimer) {
+    clearInterval(snapshotTimer);
+    snapshotTimer = null;
+  }
+}
+
 function finishConversation() {
   active = false;
   setConnection(false);
@@ -327,6 +363,7 @@ function finishConversation() {
   setState("Listo para llamar");
 
   stopMic();
+  stopFrameSync();
 
   if (socket) {
     socket.close();
@@ -350,6 +387,7 @@ async function startConversation() {
         setActive(true);
         setState("En conversación");
         await startMic();
+        startFrameSync();
       },
       onClose: () => {
         finishConversation();
