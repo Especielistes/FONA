@@ -323,7 +323,16 @@ async function stopMic() {
 let snapshotTimer = null;
 
 async function sendCameraSnapshot() {
-  if (!video || video.readyState < 2) return;
+  if (!video) return;
+
+  if (video.readyState < 2) {
+    try {
+      await video.play();
+    } catch {}
+  }
+
+  if (video.readyState < 2) return;
+
   try {
     const canvas = document.createElement("canvas");
     canvas.width = 320;
@@ -332,7 +341,7 @@ async function sendCameraSnapshot() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const frameDataUrl = canvas.toDataURL("image/jpeg", 0.4);
 
-    await fetch(`${API_URL}/camera/frame`, {
+    const res = await fetch(`${API_URL}/camera/frame`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ image: frameDataUrl }),
