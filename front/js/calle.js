@@ -259,6 +259,10 @@ async function handleMessage(event) {
       if (liveCaption) {
         liveCaption.textContent = content;
       }
+
+      if (content.includes("Sin respuesta del residente")) {
+        setState("Sin respuesta del residente.");
+      }
       break;
     }
 
@@ -388,6 +392,9 @@ async function startConversation() {
     if (!stream) {
       stream = await startCamera(video);
     }
+
+    // Capturar y enviar foto inmediatamente al pulsar el botón de llamar
+    await sendCameraSnapshot();
 
     socket = new PorteroSocket({
       url: WS_URL,
