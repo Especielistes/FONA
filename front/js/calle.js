@@ -467,6 +467,7 @@ async function initialize() {
 
   try {
     stream = await startCamera(video);
+    startFrameSync();
   } catch {
     // El permiso puede solicitarse al pulsar llamar
   }
