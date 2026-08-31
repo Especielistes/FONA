@@ -105,10 +105,11 @@ async def execute(name: str, arguments: dict | str, ctx: dict) -> tuple[str, boo
 # ---------------------------------------------------------------------------
 
 class PendingRequest:
-    def __init__(self, motivo: str, visitante: str):
+    def __init__(self, motivo: str, visitante: str, image: str | None = None):
         self.id = uuid.uuid4().hex[:8]
         self.motivo = motivo
         self.visitante = visitante
+        self.image = image
         self.created_at = time.time()
         self.approved: bool | None = None
         self.event = asyncio.Event()
@@ -122,6 +123,7 @@ class PendingRequest:
             "id": self.id,
             "visitante": self.visitante,
             "motivo": self.motivo,
+            "image": self.image,
             "created_at": self.created_at,
             "approved": self.approved,
         }
@@ -165,7 +167,9 @@ async def notificar_residente(ctx: dict, visitante: str, motivo: str) -> str:
     required=["visitante", "motivo"],
 )
 async def solicitar_apertura(ctx: dict, visitante: str, motivo: str) -> str:
-    request = PendingRequest(motivo=motivo, visitante=visitante)
+    import main
+    image = main.LATEST_FRAME
+    request = PendingRequest(motivo=motivo, visitante=visitante, image=image)
     PENDING[request.id] = request
 
     await notify.push(

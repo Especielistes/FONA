@@ -85,6 +85,14 @@ function renderPending(items) {
     card.className = "request";
     card.dataset.id = request.id;
 
+    if (request.image) {
+      const img = document.createElement("img");
+      img.className = "request-avatar";
+      img.src = request.image;
+      img.alt = `Foto de ${request.visitante || "visitante"}`;
+      card.appendChild(img);
+    }
+
     const title = document.createElement("strong");
 
     title.textContent =
