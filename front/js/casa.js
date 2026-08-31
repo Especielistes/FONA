@@ -379,3 +379,8 @@ window.setInterval(
   poll,
   PENDING_POLL_MS
 );
+
+window.setInterval(
+  pollCameraFrame,
+  1000
+);
