@@ -76,6 +76,15 @@ async def portero(ws: WebSocket) -> None:
             _current_session_task = None
 
 
+# Frame de cámara en vivo para la pantalla de casa
+LATEST_FRAME: str | None = None
+
+
+@app.get("/camera/frame")
+async def get_camera_frame():
+    return {"image": LATEST_FRAME}
+
+
 # ---------------------------------------------------------------------------
 # API de confirmación. Integrable con Home Assistant vía REST o MQTT.
 # ---------------------------------------------------------------------------

@@ -1,1 +1,77 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FONA · Casa</title><link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/casa.css"></head><body><header class="app-header"><div><p class="eyebrow">FONA · Panel residente</p><h1>Casa</h1></div><span id="connection" class="status"><i></i><span>Backend</span></span></header><main class="house"><section class="panel"><h2>Visitante</h2><div class="house-camera"><video id="houseVideo" autoplay playsinline muted></video><span>La cámara remota se integrará mediante WebRTC.</span></div></section><section class="panel"><div class="title"><h2>Conversación</h2><button id="clearConversation">Limpiar</button></div><div id="conversation" class="conversation"></div></section><section class="panel"><div class="title"><h2>Peticiones</h2><span id="count">0</span></div><div id="pending"></div><div id="doorState" class="door">PUERTA CERRADA</div></section><section class="panel"><h2>Menú</h2><div class="menu"><button id="reload">Actualizar peticiones</button><button id="test">Comprobar conexión</button></div><div id="log" class="log"></div></section></main><script type="module" src="../js/casa.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#004F9F">
+  <title>FERMAX FONA · Monitor Vivienda</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/casa.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="house-page">
+
+  <header class="navbar">
+    <div class="navbar-container">
+      <div class="brand">
+        <span class="brand-logo">FERMAX</span>
+        <span class="brand-divider">|</span>
+        <span class="brand-sub">MONITOR VIVIENDA</span>
+      </div>
+      <a href="../" class="btn-home-link">&larr; Inicio</a>
+    </div>
+  </header>
+
+  <main class="house">
+    
+    <!-- Panel Cámara Exterior -->
+    <section class="panel camera-panel">
+      <h2>Cámara Exterior Calle</h2>
+      <div class="house-camera" id="cameraBox">
+        <img id="houseFrame" alt="Cámara de calle en vivo" class="camera-stream hidden">
+        <div id="cameraPlaceholder" class="camera-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <p>Esperando señal de cámara exterior...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Panel Peticiones y Control de Puerta -->
+    <section class="panel pending-panel">
+      <div class="title">
+        <h2>Solicitudes de Apertura</h2>
+        <span id="count" class="badge-count">0</span>
+      </div>
+      <div id="pending" class="pending-list"></div>
+      <div id="doorState" class="door">PUERTA CERRADA</div>
+    </section>
+
+    <!-- Panel Registro de Conversación -->
+    <section class="panel conversation-panel">
+      <div class="title">
+        <h2>Registro de Diálogo</h2>
+        <button id="clearConversation" class="btn-subtle" type="button">Limpiar</button>
+      </div>
+      <div id="conversation" class="conversation"></div>
+    </section>
+
+    <!-- Panel Acciones y Sistema -->
+    <section class="panel system-panel">
+      <h2>Gestión del Sistema</h2>
+      <div class="menu">
+        <button id="reload" class="btn-secondary" type="button">Actualizar</button>
+        <button id="test" class="btn-secondary" type="button">Verificar Estado</button>
+      </div>
+      <div id="log" class="log"></div>
+    </section>
+
+  </main>
+
+  <script type="module" src="../js/casa.js"></script>
+</body>
+</html>

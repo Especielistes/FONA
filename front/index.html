@@ -12,7 +12,7 @@
 </head>
 <body class="home-page">
 
-  <!-- Header Institucional FERMAX -->
+  <!-- Header Institucional FERMAX (Limpio) -->
   <header class="navbar">
     <div class="navbar-container">
       <div class="brand">
@@ -20,23 +20,19 @@
         <span class="brand-divider">|</span>
         <span class="brand-sub">FONA IA</span>
       </div>
-      <div class="badge-status">
-        <span class="pulse-dot"></span>
-        <span>Sistema Operativo</span>
-      </div>
     </div>
   </header>
 
   <!-- Contenedor Principal -->
   <main class="main-container">
     
-    <!-- Hero Header -->
-    <section class="hero-section">
+    <!-- Hero Header Profesional en Bloque Oscuro -->
+    <section class="hero-card">
       <div class="hero-tag">TECNOLOGÍA DE ACCESIBILIDAD UNIVERSAL</div>
       <h1 class="hero-title">Videoportero Accesible con IA</h1>
       <p class="hero-description">
-        Plataforma inteligente de comunicación accesible para viviendas y edificios. 
-        Facilita la interacción autónoma mediante voz, reconocimiento de lengua de signos por visión artificial y texto accesible.
+        Plataforma de comunicación accesible para viviendas y edificios. 
+        Facilita la interacción autónoma mediante voz, reconocimiento de lengua de signos por visión artificial y mensajes de texto.
       </p>
     </section>
 
@@ -62,7 +58,7 @@
           </p>
         </div>
         <div class="card-footer">
-          <span class="btn-action">Abrir Placa Calle &rarr;</span>
+          <span class="btn-action">Acceder a Placa Calle &rarr;</span>
         </div>
       </a>
 
@@ -84,7 +80,7 @@
           </p>
         </div>
         <div class="card-footer">
-          <span class="btn-action">Abrir Monitor Casa &rarr;</span>
+          <span class="btn-action">Acceder a Monitor Casa &rarr;</span>
         </div>
       </a>
 
@@ -101,17 +97,24 @@
           </svg>
           <h2>Información del Proyecto FONA</h2>
         </div>
-        <span class="info-badge">PROTOTIPO FERMAX IA</span>
+        <span class="info-badge">DOCUMENTACIÓN TÉCNICA</span>
       </div>
 
       <div class="info-content">
         <p class="info-intro">
-          <strong>FONA</strong> es un prototipo de videoportero accesible impulsado por Inteligencia Artificial que elimina las barreras de comunicación tradicionales en el acceso a viviendas para personas sordas, con discapacidad auditiva, del habla o motora.
+          FONA es un prototipo de videoportero accesible impulsado por Inteligencia Artificial que elimina las barreras de comunicación tradicionales en el acceso a viviendas para personas sordas, con discapacidad auditiva, del habla o motora.
         </p>
 
         <div class="info-features">
           <div class="feature-item">
-            <div class="feature-icon">🖐️</div>
+            <div class="feature-svg">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#004F9F" stroke-width="2">
+                <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+                <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v6"/>
+                <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
+                <path d="M18 8a2 2 0 0 1 2 2v4a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
+              </svg>
+            </div>
             <div>
               <h3>Reconocimiento de Lengua de Signos</h3>
               <p>Detección de manos con visión artificial (MediaPipe) y clasificación gestual k-NN en tiempo real sin requerir hardware especial.</p>
@@ -119,7 +122,12 @@
           </div>
 
           <div class="feature-item">
-            <div class="feature-icon">🎙️</div>
+            <div class="feature-svg">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#004F9F" stroke-width="2">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              </svg>
+            </div>
             <div>
               <h3>Interacción Multimodal por Voz</h3>
               <p>Transcripción rápida mediante Whisper y procesamiento de lenguaje natural con IA para atender de manera fluida a los visitantes.</p>
@@ -127,7 +135,12 @@
           </div>
 
           <div class="feature-item">
-            <div class="feature-icon">🔒</div>
+            <div class="feature-svg">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#004F9F" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
             <div>
               <h3>Autorización y Seguridad Garantizada</h3>
               <p>El asistente de IA consulta y solicita permiso de acceso al residente, quien siempre mantiene el control total de la puerta.</p>
@@ -138,10 +151,10 @@
         <!-- Bloque reservado para el texto completo que pasará el usuario -->
         <div class="info-custom-block">
           <div class="custom-block-header">
-            <span>DOCUMENTACIÓN DETALLADA DEL PROYECTO</span>
+            <span>INFORMACIÓN ADICIONAL DEL PROYECTO</span>
           </div>
           <div class="custom-block-body" id="customProjectInfo">
-            <p><em>Este panel está preparado para incluir la información detallada completa del proyecto. Pásame tu texto cuando lo desees para integrarlo aquí.</em></p>
+            <p>Espacio reservado para añadir el texto informativo completo del proyecto.</p>
           </div>
         </div>
       </div>
