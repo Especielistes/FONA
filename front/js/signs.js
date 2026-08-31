@@ -1,10 +1,10 @@
 import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
 const K = 5;
-const SMOOTHING_FRAMES = 7;
-const SMOOTHING_REQUIRED = 5;
-const SIGN_COOLDOWN_MS = 1500; // Cooldown entre detección de la misma palabra
-const DISTANCE_THRESHOLD = 0.85; // Umbral máximo de distancia para aceptar un signo
+const SMOOTHING_FRAMES = 5;
+const SMOOTHING_REQUIRED = 3;
+const SIGN_COOLDOWN_MS = 1200; // Cooldown entre detección de la misma palabra
+const DISTANCE_THRESHOLD = 1.35; // Umbral óptimo para detección en vivo
 
 const CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -27,6 +27,7 @@ export class SignRecognizer {
     this.twoHandTemplates = [];   // [{ label, vec }] (126 floats)
     this.landmarker = null;
     this.running = false;
+    this.shouldRun = false;
     this.voteBuffer = [];
     this.lastVideoTime = -1;
     this.lastDetectedSign = null;
@@ -74,6 +75,9 @@ export class SignRecognizer {
       });
 
       this.onStatus?.("Detector de signos listo");
+      if (this.shouldRun) {
+        this.start();
+      }
       return true;
     } catch (error) {
       console.warn("MediaPipe no disponible:", error);
@@ -83,12 +87,14 @@ export class SignRecognizer {
   }
 
   start() {
+    this.shouldRun = true;
     if (!this.landmarker || this.running) return;
     this.running = true;
     this.loop();
   }
 
   stop() {
+    this.shouldRun = false;
     this.running = false;
     if (this.animFrameId) {
       cancelAnimationFrame(this.animFrameId);
