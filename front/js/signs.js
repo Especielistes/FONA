@@ -1,4 +1,5 @@
 import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+import { GESTURES_DATA } from "./gesturesData.js";
 
 const K = 5;
 const SMOOTHING_FRAMES = 4;
@@ -39,23 +40,9 @@ export class SignRecognizer {
     try {
       this.onStatus?.("Cargando modelo de signos…");
 
-      // Cargar dataset de signos pregrabados intentando múltiples rutas
-      const paths = ["../data/gestures.json", "/data/gestures.json", "data/gestures.json", "./data/gestures.json"];
-      let payload = null;
-
-      for (const p of paths) {
-        try {
-          const response = await fetch(p);
-          if (response.ok) {
-            payload = await response.json();
-            console.log("Dataset gestures.json cargado con éxito desde:", p);
-            break;
-          }
-        } catch {}
-      }
-
-      if (payload && payload.gestures) {
-        for (const [label, samples] of Object.entries(payload.gestures)) {
+      // Cargar dataset de signos empaquetado directamente en JS (Cero fallos HTTP 404)
+      if (GESTURES_DATA && GESTURES_DATA.gestures) {
+        for (const [label, samples] of Object.entries(GESTURES_DATA.gestures)) {
           for (const s of samples) {
             const hasR = s[126];
             const hasL = s[127];
@@ -70,7 +57,7 @@ export class SignRecognizer {
         }
       }
 
-      console.log(`Plantillas cargadas: 1 mano=${this.singleHandTemplates.length}, 2 manos=${this.twoHandTemplates.length}`);
+      console.log(`Plantillas de signos listas: 1 mano=${this.singleHandTemplates.length}, 2 manos=${this.twoHandTemplates.length}`);
 
       // Cargar MediaPipe Vision Tasks
       const vision = await FilesetResolver.forVisionTasks(
@@ -80,7 +67,6 @@ export class SignRecognizer {
       this.landmarker = await HandLandmarker.createFromOptions(vision, {
         baseOptions: {
           modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-          delegate: "GPU",
         },
         runningMode: "VIDEO",
         numHands: 2,
@@ -95,7 +81,7 @@ export class SignRecognizer {
       return true;
     } catch (error) {
       console.warn("MediaPipe no disponible:", error);
-      this.onStatus?.("Modo signos disponible (manual)");
+      this.onStatus?.("Modo signos disponible");
       return false;
     }
   }
