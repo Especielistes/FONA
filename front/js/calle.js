@@ -312,33 +312,6 @@ async function stopMic() {
 /* CICLO DE CONVERSACIÓN                                                       */
 /* -------------------------------------------------------------------------- */
 
-let frameInterval = null;
-
-function startFrameStreaming() {
-  if (frameInterval) return;
-  const canvas = document.createElement("canvas");
-  canvas.width = 320;
-  canvas.height = 240;
-  const ctx = canvas.getContext("2d");
-
-  frameInterval = setInterval(() => {
-    if (socket && socket.isOpen() && video && video.readyState >= 2) {
-      try {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const frameDataUrl = canvas.toDataURL("image/jpeg", 0.5);
-        socket.sendText(JSON.stringify({ type: "frame", image: frameDataUrl }));
-      } catch {}
-    }
-  }, 400);
-}
-
-function stopFrameStreaming() {
-  if (frameInterval) {
-    clearInterval(frameInterval);
-    frameInterval = null;
-  }
-}
-
 function finishConversation() {
   active = false;
   setConnection(false);
@@ -346,7 +319,6 @@ function finishConversation() {
   setState("Listo para llamar");
 
   stopMic();
-  stopFrameStreaming();
 
   if (socket) {
     socket.close();
@@ -370,7 +342,6 @@ async function startConversation() {
         setActive(true);
         setState("En conversación");
         await startMic();
-        startFrameStreaming();
       },
       onClose: () => {
         finishConversation();
