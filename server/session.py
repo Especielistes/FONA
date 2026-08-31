@@ -82,7 +82,7 @@ async def _receive_input(ws: WebSocket, detector: UtteranceDetector) -> str | No
                 return text
             continue
 
-        # --- texto, signos o fotograma de cámara ---
+        # --- texto o signos ---
         if message.get("text"):
             try:
                 payload = json.loads(message["text"])
@@ -90,11 +90,6 @@ async def _receive_input(ws: WebSocket, detector: UtteranceDetector) -> str | No
                 continue
 
             kind = payload.get("type")
-            if kind == "frame":
-                import main
-                main.LATEST_FRAME = payload.get("image")
-                continue
-
             if kind == "hangup":
                 return None
             if kind == "text":
