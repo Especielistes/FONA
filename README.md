@@ -7,7 +7,7 @@ El sistema opera de manera autónoma las 24 horas del día en la nube de forma *
 
 ---
 
-## 🌟 Características Principales
+## Características Principales
 
 - **Interacción Multimodal Universal**: Permite al visitante comunicarse mediante **Voz**, **Lengua de Signos** (visión por computador) o **Texto Plano**.
 - **Reconocimiento de Lengua de Signos en Cliente**: Integra MediaPipe Tasks Vision y un clasificador gestual k-NN (63/126 dimensiones) que procesa los signos a 30 FPS en el propio dispositivo del usuario sin enviar secuencias de vídeo privado por internet.
@@ -16,7 +16,7 @@ El sistema opera de manera autónoma las 24 horas del día en la nube de forma *
 
 ---
 
-## 📐 Arquitectura y Flujo del Sistema
+## Arquitectura y Flujo del Sistema
 
 ```mermaid
 graph LR
@@ -28,19 +28,19 @@ graph LR
 
 ---
 
-## 🚀 Despliegue en Producción
+## Despliegue en Producción
 
-- 🌐 **Frontend (Vercel CDN)**: [https://fona-portero.vercel.app](https://fona-portero.vercel.app)
+- **Frontend (Vercel CDN)**: [https://fona-portero.vercel.app](https://fona-portero.vercel.app)
   - Portal Principal: `/`
   - Placa Exterior (Calle): `/calle/`
   - Monitor Vivienda (Casa): `/casa/`
-- ⚙️ **Backend (Render Web Services)**: [https://fona-1ir2.onrender.com](https://fona-1ir2.onrender.com)
+- ⚙️ **Backend (Render Web Services)**:
   - Estado del servidor: `GET /health`
   - Peticiones pendientes: `GET /pending`
 
 ---
 
-## 🛠️ Tecnologías Empleadas
+## Tecnologías Empleadas
 
 - **Frontend**: HTML5, CSS3 Fermax Blue (`#004F9F`), JavaScript ES6+ Modular, `@mediapipe/tasks-vision`, Web Audio API.
 - **Backend**: Python 3.10+, FastAPI, Uvicorn, Pydantic, HTTPX.
@@ -48,32 +48,6 @@ graph LR
 
 ---
 
-## 📄 Licencia y Créditos
-
-Desarrollado para **FERMAX Electrónica, S.A.U.** · Proyecto FONA (2026).
-curl -X POST http://localhost:8080/pending/<id>/approve
-```
-
-Esta separación es deliberada: un modelo de lenguaje que conversa con
-desconocidos es vulnerable a instrucciones maliciosas habladas, y la decisión de
-franquear el acceso a una vivienda no debe depender de él.
-
-## Añadir acciones nuevas
-
-En `tools.py`, decorar una función asíncrona:
-
-```python
-@tool(
-    description="Qué hace y cuándo debe usarse",
-    params={"arg": {"type": "string", "description": "..."}},
-    required=["arg"],
-)
-async def mi_funcion(ctx: dict, arg: str) -> str:
-    return "Resultado que verá el modelo"
-```
-
-El esquema JSON y el registro se generan solos. Con `ends_session=True` la
-conversación termina tras ejecutarla.
 
 ## Latencia
 
