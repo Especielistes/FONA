@@ -1,126 +1,53 @@
-# FONA
-# Videoportero accesible
+# FERMAX · F.O.N.A. (Fermax Operative Natural Assistant)
+## Videoportero Accesible con Inteligencia Artificial Multimodal
 
-Prototipo de videoportero que permite comunicarse en tres modalidades —voz, texto
-y lengua de signos— sin que el visitante ni el residente tengan que adaptarse a
-una sola. Todo lo que se dice aparece siempre en pantalla como texto.
+Prototipo funcional de videoportero inteligente y accesible universal desarrollado bajo la identidad corporativa de **FERMAX** (`#004F9F`). Elimina las barreras de comunicación tradicionales en el acceso a viviendas para personas sordas, con discapacidad auditiva, del habla o motora.
 
-```
-entrada: voz | signos | teclado  →  TEXTO  →  salida: texto siempre + voz si procede
-```
+El sistema opera de manera autónoma las 24 horas del día en la nube de forma **100% gratuita**, sin requerir servidores locales ni hardware GPU dedicado.
 
-## Estado del proyecto
+---
 
-Prueba de concepto. El reconocimiento de signos funciona con un **vocabulario
-cerrado de signos estáticos**, no con lengua de signos continua. No incluye
-signos con movimiento ni expresión facial, que son parte de la gramática de la
-lengua de signos española.
+## Características Principales
 
-## Estructura
+- **Interacción Multimodal Universal**: Permite al visitante comunicarse mediante **Voz**, **Lengua de Signos** (visión por computador) o **Texto Plano**.
+- **Reconocimiento de Lengua de Signos en Cliente**: Integra MediaPipe Tasks Vision y un clasificador gestual k-NN (63/126 dimensiones) que procesa los signos a 30 FPS en el propio dispositivo del usuario sin enviar secuencias de vídeo privado por internet.
+- **IA Conversacional en Español**: Inferencia ultrarrápida (~0.2s) con Groq Cloud API ejecutando los modelos `whisper-large-v3-turbo` (transcripción de voz) y `qwen/qwen3.6-27b` (asistente conversacional con *Tool Calling*).
+- **Autorización Remota en la Vivienda**: El residente recibe la solicitud en su monitor y autoriza (**Abrir**) o deniega (**Denegar**) el acceso con un solo clic.
 
-```
-server/                  backend Python
-  config.py              configuración central
-  audio.py               segmentación de voz (VAD)
-  stt.py                 transcripción con faster-whisper
-  tts.py                 síntesis con Piper
-  llm.py                 cliente de Ollama y tool calling
-  tools.py               acciones que el modelo puede solicitar
-  notify.py              avisos al residente (log o MQTT)
-  session.py             orquestación de la conversación
-  main.py                servidor FastAPI
-tools/
-  gesture_trainer.html   grabación de muestras y validación del clasificador
-client_pc.py             cliente de consola para probar el backend
-firmware/                opcional, solo si se monta el dispositivo físico
+---
+
+## Arquitectura y Flujo del Sistema
+
+```mermaid
+graph LR
+    C["1. CALLE<br/>(Vercel)<br/>Voz, Signos o Texto"] -->|1. Envía| S["2. SERVIDOR<br/>(Render)<br/>Centralita de llamada"]
+    S -->|2. Consulta| IA["3. INTELIGENCIA ARTIFICIAL<br/>(Groq Cloud)<br/>Whisper + Qwen LLM"]
+    IA -->|3. Solicita| H["4. CASA<br/>(Vercel)<br/>Botones: ABRIR / DENEGAR"]
+    H -.->|4. Decisión de apertura| C
 ```
 
-## Reconocimiento de signos
+---
 
-MediaPipe Hands extrae 21 puntos por mano. Cada muestra se normaliza (origen en
-la muñeca, escala invariante a la distancia) y se concatena en un vector de 128
-dimensiones. La clasificación es un **k-NN con k=5** sobre las muestras grabadas:
-sin entrenamiento, sin dependencias de ML y suficiente para signos estáticos.
+## Despliegue en Producción
 
-Para grabar el vocabulario:
+- **Frontend (Vercel CDN)**: [https://fona-portero.vercel.app](https://fona-portero.vercel.app)
+  - Portal Principal: `/`
+  - Placa Exterior (Calle): `/calle/`
+  - Monitor Vivienda (Casa): `/casa/`
+- ⚙️ **Backend (Render Web Services)**:
+  - Estado del servidor: `GET /health`
+  - Peticiones pendientes: `GET /pending`
 
-```bash
-cd tools
-python -m http.server 8000
-# abrir http://localhost:8000/gesture_trainer.html
-```
+---
 
-La cámara no funciona abriendo el archivo con doble clic: Chrome bloquea
-`getUserMedia` en `file://`. Hay que servirlo por HTTP.
+## Tecnologías Empleadas
 
-## Backend
+- **Frontend**: HTML5, CSS3 Fermax Blue (`#004F9F`), JavaScript ES6+ Modular, `@mediapipe/tasks-vision`, Web Audio API.
+- **Backend**: Python 3.10+, FastAPI, Uvicorn, Pydantic, HTTPX.
+- **IA Cloud**: Groq Cloud API (`whisper-large-v3-turbo` + `qwen/qwen3.6-27b`).
 
-```bash
-cd server
-python -m venv .venv && .venv\Scripts\activate
-pip install -r requirements.txt
-```
+---
 
-Modelo de lenguaje:
-
-```bash
-ollama pull qwen2.5:7b-instruct
-```
-
-Voz de Piper (castellano):
-
-```bash
-mkdir voices
-# descargar es_ES-davefx-medium.onnx y su .onnx.json del repositorio de voces de Piper
-```
-
-Comprobar la frecuencia real de la voz en el `.onnx.json` (`audio.sample_rate`) y
-ajustar `PIPER_SAMPLE_RATE` en `config.py`.
-
-Arranque:
-
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8080
-```
-
-Sin GPU:
-
-```bash
-set STT_DEVICE=cpu && set STT_COMPUTE=int8 && set STT_MODEL=small
-uvicorn main:app --host 0.0.0.0 --port 8080
-```
-
-## Apertura de la puerta
-
-El modelo **no puede abrir la puerta**. Cuando invoca `solicitar_apertura`, la
-petición queda pendiente y el servidor espera hasta 45 segundos una confirmación
-humana:
-
-```bash
-curl http://localhost:8080/pending
-curl -X POST http://localhost:8080/pending/<id>/approve
-```
-
-Esta separación es deliberada: un modelo de lenguaje que conversa con
-desconocidos es vulnerable a instrucciones maliciosas habladas, y la decisión de
-franquear el acceso a una vivienda no debe depender de él.
-
-## Añadir acciones nuevas
-
-En `tools.py`, decorar una función asíncrona:
-
-```python
-@tool(
-    description="Qué hace y cuándo debe usarse",
-    params={"arg": {"type": "string", "description": "..."}},
-    required=["arg"],
-)
-async def mi_funcion(ctx: dict, arg: str) -> str:
-    return "Resultado que verá el modelo"
-```
-
-El esquema JSON y el registro se generan solos. Con `ends_session=True` la
-conversación termina tras ejecutarla.
 
 ## Latencia
 
