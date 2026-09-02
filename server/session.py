@@ -89,7 +89,12 @@ async def _receive_input(ws: WebSocket, detector: UtteranceDetector) -> str | No
             except json.JSONDecodeError:
                 continue
 
-            kind = payload.get("type")
+            if isinstance(payload, dict) and payload.get("image"):
+                ctx["image"] = payload["image"]
+                import main
+                main.LATEST_FRAME = payload["image"]
+
+            kind = payload.get("type") if isinstance(payload, dict) else None
             if kind == "hangup":
                 return None
             
@@ -127,17 +132,42 @@ async def run(ws: WebSocket) -> None:
             if entry is None:
                 break
 
-            log.info("VISITANTE: %s", entry["display"])
-            await _send(ws, {"type": "transcript", "role": "visitor", "content": entry["display"]})
-            messages.append({"role": "user", "content": entry["model"]})
+            log.info("VISITANTE: %s", text)
+            await _send(ws, {"type": "transcript", "role": "visitor", "content": text})
+            messages.append({"role": "user", "content": text})
 
             reply, end_session = await llm.respond(messages, ctx)
 
-            # La apertura se procesa antes de hablar, para que la puerta se abra
-            # mientras el asistente dice "pase".
+            # ================================================================
+            # APERTURA AUTORIZADA
+            # ================================================================
+            # La autorización del residente tiene prioridad absoluta sobre
+            # cualquier respuesta que haya generado el LLM.
+            #
+            # No volvemos a consultar al LLM.
+            # No usamos su respuesta.
+            # Enviamos directamente la señal de apertura y "Pase."
+            # ================================================================
+
             if ctx.get("open_door"):
-                await _send(ws, {"type": "open_door"})
+                log.info("APERTURA AUTORIZADA: enviando orden al cliente")
+
                 ctx["open_door"] = False
+
+                # Primero avisamos al frontend para que abra visualmente
+                # la puerta.
+                await _send(ws, {"type": "open_door"})
+
+                # Después decimos exactamente "Pase."
+                await _speak(ws, "Pase.")
+
+                # Cerramos la conversación.
+                await _send(ws, {"type": "bye"})
+                break
+
+            # ================================================================
+            # RESPUESTA NORMAL
+            # ================================================================
 
             await _speak(ws, reply)
 

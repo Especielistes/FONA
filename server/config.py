@@ -13,9 +13,9 @@ SAMPLE_RATE = 16000
 FRAME_MS = 20  # webrtcvad solo acepta 10, 20 o 30 ms
 
 # --- STT (faster-whisper) ---
-STT_MODEL = os.getenv("STT_MODEL", "medium")  # "small" pierde nombres propios con ruido
-STT_DEVICE = os.getenv("STT_DEVICE", "cuda")  # "cpu" si no hay GPU
-STT_COMPUTE = os.getenv("STT_COMPUTE", "int8_float16")
+STT_MODEL = os.getenv("STT_MODEL", "small")
+STT_DEVICE = os.getenv("STT_DEVICE", "cpu")
+STT_COMPUTE = os.getenv("STT_COMPUTE", "int8")
 LANGUAGE = "es"
 
 # --- TTS (Piper) ---
@@ -26,7 +26,7 @@ TTS_ENABLED = os.getenv("TTS_ENABLED", "0") == "1"
 
 # --- LLM (Ollama) ---
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5:7b-instruct")
+LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5:3b")
 LLM_TEMPERATURE = 0.3
 LLM_MAX_TOOL_ROUNDS = 4  # cortafuegos contra bucles de tool calling
 
@@ -37,11 +37,10 @@ UTTERANCE_MIN_SPEECH_MS = 300  # para descartar ruidos cortos
 SESSION_TIMEOUT_S = 90  # duración máxima de una conversación
 DOOR_CONFIRM_TIMEOUT_S = 45  # tiempo que esperamos la confirmación del residente
 
-# --- Notificaciones ---
-MQTT_ENABLED = os.getenv("MQTT_ENABLED", "0") == "1"
-MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
-MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
-MQTT_TOPIC_PREFIX = "videoportero"
+# --- Groq API (Para despliegue gratuito ultra-rápido en la nube) ---
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_LLM_MODEL = os.getenv("GROQ_LLM_MODEL", "qwen/qwen3.6-27b")
+GROQ_STT_MODEL = os.getenv("GROQ_STT_MODEL", "whisper-large-v3-turbo")
 
 # --- Almacenamiento ---
 DATA_DIR = os.getenv("DATA_DIR", "./data")

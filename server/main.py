@@ -7,7 +7,8 @@ import asyncio
 import logging
 
 from fastapi import FastAPI, HTTPException, WebSocket
-
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 import config
 import notify
 import session
@@ -31,43 +32,78 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Una sola conversación a la vez: hay un solo portero y una sola GPU.
-_session_lock = asyncio.Lock()
+# Gestión de sesión activa (reemplaza sesiones huérfanas al recibir una nueva llamada)
+_current_session_task: asyncio.Task | None = None
 
 
 @app.on_event("startup")
 async def startup() -> None:
     notify.connect()
-    # Precargamos Whisper para que la primera visita no espere 20 segundos.
+    # Precargamos Whisper para que la primera visita no espere
     await asyncio.to_thread(stt.load)
     log.info("Servidor listo")
 
 
 @app.websocket("/portero")
 async def portero(ws: WebSocket) -> None:
+    global _current_session_task
     await ws.accept()
 
-    if _session_lock.locked():
-        log.warning("Ya hay una sesión activa; se rechaza la conexión")
-        await ws.close(code=1013)  # try again later
-        return
-
-    async with _session_lock:
-        log.info("Nueva sesión desde %s", ws.client)
+    # Si había una sesión anterior no finalizada (ej: recarga de página o llamada previa), la cancelamos limpiamente
+    if _current_session_task and not _current_session_task.done():
+        log.info("Cerrando sesión previa huérfana para conectar nueva llamada")
+        _current_session_task.cancel()
         try:
-            await asyncio.wait_for(session.run(ws), timeout=config.SESSION_TIMEOUT_S)
-        except asyncio.TimeoutError:
-            log.info("Sesión cortada por tiempo máximo")
-        finally:
-            try:
-                await ws.close()
-            except RuntimeError:
-                pass
+            await _current_session_task
+        except (asyncio.CancelledError, Exception):
+            pass
+
+    task = asyncio.current_task()
+    _current_session_task = task
+
+    log.info("Nueva sesión desde %s", ws.client)
+    try:
+        await asyncio.wait_for(session.run(ws), timeout=config.SESSION_TIMEOUT_S)
+    except asyncio.CancelledError:
+        log.info("Sesión cancelada por nueva conexión entrante")
+    except asyncio.TimeoutError:
+        log.info("Sesión cortada por tiempo máximo")
+    finally:
+        try:
+            await ws.close()
+        except RuntimeError:
+            pass
+        if _current_session_task is task:
+            _current_session_task = None
+
+
+# Frame de cámara en vivo para la pantalla de casa
+LATEST_FRAME: str | None = None
+
+
+class FramePayload(BaseModel):
+    image: str
+
+
+@app.post("/camera/frame")
+async def save_camera_frame(payload: FramePayload):
+    global LATEST_FRAME
+    LATEST_FRAME = payload.image
+    return {"status": "ok"}
+
+
+@app.get("/camera/frame")
+async def get_camera_frame():
+    return {"image": LATEST_FRAME}
 
 
 # ---------------------------------------------------------------------------
 # API de confirmación. Integrable con Home Assistant vía REST o MQTT.
 # ---------------------------------------------------------------------------
+
+@app.get("/")
+async def home():
+    return FileResponse("../web/index.html")
 
 @app.get("/pending")
 async def pending() -> list[dict]:
