@@ -226,13 +226,16 @@ async function sendSignsMessage() {
   const image = getSnapshotFrame();
   sendCameraSnapshot();
 
+  addTurn(feed, "visitor", content);
+
+  const payload = { type: "text", content: content };
+  if (image) payload.image = image;
+
   if (!socket?.isOpen()) {
     await startConversation();
     setTimeout(() => {
       if (socket?.isOpen()) {
-        const payload = { type: "text", content: content };
-        if (image) payload.image = image;
-        socket.sendText(JSON.stringify(payload));
+        socket.sendText(payload);
         signs = [];
         renderSigns();
       }
@@ -240,9 +243,7 @@ async function sendSignsMessage() {
     return;
   }
 
-  const payload = { type: "text", content: content };
-  if (image) payload.image = image;
-  socket.sendText(JSON.stringify(payload));
+  socket.sendText(payload);
   signs = [];
   renderSigns();
 }
@@ -473,6 +474,8 @@ textForm?.addEventListener("submit", async (event) => {
   const image = getSnapshotFrame();
   sendCameraSnapshot();
 
+  addTurn(feed, "visitor", content);
+
   const payload = { type: "text", content: content };
   if (image) payload.image = image;
 
@@ -480,14 +483,14 @@ textForm?.addEventListener("submit", async (event) => {
     await startConversation();
     setTimeout(() => {
       if (socket?.isOpen()) {
-        socket.sendText(JSON.stringify(payload));
+        socket.sendText(payload);
         textInput.value = "";
       }
     }, 500);
     return;
   }
 
-  socket.sendText(JSON.stringify(payload));
+  socket.sendText(payload);
   textInput.value = "";
 });
 
