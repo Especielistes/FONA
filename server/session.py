@@ -27,10 +27,30 @@ from fastapi import WebSocket, WebSocketDisconnect
 import config
 import llm
 import stt
+import tools
 import tts
 from audio import UtteranceDetector
 
 log = logging.getLogger(__name__)
+
+def _extract_visitor_and_reason(raw: str) -> tuple[str, str]:
+    """Extrae de forma limpia el nombre del visitante y el motivo de la frase."""
+    text = raw.strip()
+    lower = text.lower()
+    
+    if "soy " in lower:
+        part = text[lower.find("soy ") + 4:].strip()
+        for sep in [",", ".", " y ", " que ", " porfa", " ábreme", " abreme", " vengo"]:
+            if sep in part.lower():
+                idx = part.lower().find(sep)
+                part = part[:idx].strip()
+        if part:
+            return part.capitalize(), "Desea entrar"
+
+    if "paquete" in lower or "repartidor" in lower:
+        return "Repartidor", "Entrega de paquete"
+
+    return "Visitante", text if len(text) <= 60 else "Desea entrar"
 
 CHUNK_BYTES = 3200  # 100 ms por trama de envío
 
@@ -139,13 +159,14 @@ async def run(ws: WebSocket) -> None:
             # Garantía antibloqueo: Si la IA no invocó la herramienta pero el visitante expresa intención de acceso
             if not ctx.get("open_door") and not ctx.get("requested_door"):
                 lowered = text.lower()
-                intenciones = ["abrir", "ábreme", "abreme", "entre", "entrar", "pasar", "visita", "paquete", "repartidor", "soy", "hola", "vengo"]
+                intenciones = ["abrir", "ábreme", "abreme", "entre", "entrar", "pasar", "visita", "paquete", "repartidor", "soy", "hola", "vengo", "buenas"]
                 if any(k in lowered for k in intenciones):
                     log.info("Intención de acceso detectada: solicitando apertura a Casa...")
                     ctx["requested_door"] = True
+                    vis_nombre, vis_motivo = _extract_visitor_and_reason(text)
                     reply, end_session = await tools.execute(
                         "solicitar_apertura",
-                        {"visitante": text, "motivo": "Solicitud de entrada"},
+                        {"visitante": vis_nombre, "motivo": vis_motivo},
                         ctx,
                     )
 
