@@ -1,5 +1,5 @@
 
-import { WS_URL } from "./config.js";
+import { API_URL, WS_URL } from "./config.js";
 import { PorteroSocket } from "./websocket.js";
 import { addTurn } from "./ui.js";
 import { startCamera, createMicrophone } from "./camera.js";

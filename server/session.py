@@ -84,23 +84,28 @@ async def _receive_input(ws: WebSocket, detector: UtteranceDetector) -> str | No
 
         # --- texto o signos ---
         if message.get("text"):
+            raw_text = message["text"]
             try:
-                payload = json.loads(message["text"])
-            except json.JSONDecodeError:
-                continue
+                payload = json.loads(raw_text)
+                if isinstance(payload, dict):
+                    if payload.get("image"):
+                        ctx["image"] = payload["image"]
+                        import main
+                        main.LATEST_FRAME = payload["image"]
 
-            if isinstance(payload, dict) and payload.get("image"):
-                ctx["image"] = payload["image"]
-                import main
-                main.LATEST_FRAME = payload["image"]
+                    kind = payload.get("type")
+                    if kind == "hangup":
+                        return None
+                    if kind == "text":
+                        content = (payload.get("content") or "").strip()
+                        if content:
+                            return content
+            except Exception:
+                pass
 
-            kind = payload.get("type") if isinstance(payload, dict) else None
-            if kind == "hangup":
-                return None
-            if kind == "text":
-                content = (payload.get("content") or "").strip()
-                if content:
-                    return content
+            clean_text = raw_text.strip()
+            if clean_text and not clean_text.startswith("{"):
+                return clean_text
 
 
 async def run(ws: WebSocket) -> None:
