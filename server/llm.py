@@ -38,18 +38,53 @@ Reglas estrictas:
 GREETING = "Buenos días. ¿Quién es, por favor?"
 
 
+_GROQ_DISCOVERED_MODELS: list[str] = []
+
+
+async def _get_groq_models() -> list[str]:
+    global _GROQ_DISCOVERED_MODELS
+    if _GROQ_DISCOVERED_MODELS:
+        return _GROQ_DISCOVERED_MODELS
+
+    if not config.GROQ_API_KEY:
+        return []
+
+    try:
+        url = "https://api.groq.com/openai/v1/models"
+        headers = {"Authorization": f"Bearer {config.GROQ_API_KEY}"}
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.get(url, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                all_ids = [m["id"] for m in data.get("data", [])]
+                log.info("Modelos descubiertos en Groq: %s", all_ids)
+                chat_models = [m for m in all_ids if "whisper" not in m.lower()]
+                if chat_models:
+                    _GROQ_DISCOVERED_MODELS = chat_models
+                    return _GROQ_DISCOVERED_MODELS
+            else:
+                log.warning("Consulta a /models en Groq devolvió status %s: %s", resp.status_code, resp.text)
+    except Exception as e:
+        log.warning("Excepción consultando /models en Groq: %s", e)
+
+    return []
+
+
 async def chat(messages: list[dict]) -> dict:
     """Hace una llamada a Groq API (probando modelos masivos ultra-rápidos) y devuelve el mensaje."""
 
     if config.GROQ_API_KEY:
-        candidate_models = [
+        discovered = await _get_groq_models()
+        candidate_models = list(discovered) if discovered else [
             config.GROQ_LLM_MODEL,
             "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant",
-            "qwen-2.5-coder-32b",
+            "llama-3.2-11b-vision-preview",
+            "llama-3.2-3b-preview",
+            "llama-3.2-1b-preview",
         ]
-        # Eliminar duplicados manteniendo orden
-        candidate_models = list(dict.fromkeys(candidate_models))
+        if config.GROQ_LLM_MODEL and config.GROQ_LLM_MODEL not in candidate_models:
+            candidate_models.insert(0, config.GROQ_LLM_MODEL)
 
         for model_name in candidate_models:
             try:
