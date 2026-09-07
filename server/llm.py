@@ -39,50 +39,67 @@ GREETING = "Buenos días. ¿Quién es, por favor?"
 
 
 async def chat(messages: list[dict]) -> dict:
-    """Hace una llamada a Groq API (o a Ollama local como fallback) y devuelve el mensaje."""
+    """Hace una llamada a Groq API (probando modelos masivos ultra-rápidos) y devuelve el mensaje."""
 
     if config.GROQ_API_KEY:
-        try:
-            url = "https://api.groq.com/openai/v1/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {config.GROQ_API_KEY}",
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "model": config.GROQ_LLM_MODEL,
-                "messages": messages,
-                "tools": tools.schemas(),
-                "temperature": config.LLM_TEMPERATURE,
-            }
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(url, headers=headers, json=payload)
-                response.raise_for_status()
-                message = response.json()["choices"][0]["message"]
-                log.info("LLM (Groq): %s", message)
-                return message
-        except Exception as e:
-            log.warning("Fallo en Groq LLM, usando fallback Ollama: %s", e)
+        candidate_models = [
+            config.GROQ_LLM_MODEL,
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768",
+        ]
+        # Eliminar duplicados manteniendo orden
+        candidate_models = list(dict.fromkeys(candidate_models))
 
-    # Fallback a Ollama local
-    payload = {
-        "model": config.LLM_MODEL,
-        "messages": messages,
-        "tools": tools.schemas(),
-        "stream": False,
-        "options": {
-            "temperature": config.LLM_TEMPERATURE,
-        },
+        for model_name in candidate_models:
+            try:
+                url = "https://api.groq.com/openai/v1/chat/completions"
+                headers = {
+                    "Authorization": f"Bearer {config.GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                }
+                payload = {
+                    "model": model_name,
+                    "messages": messages,
+                    "tools": tools.schemas(),
+                    "temperature": config.LLM_TEMPERATURE,
+                }
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    response = await client.post(url, headers=headers, json=payload)
+                    if response.status_code == 200:
+                        message = response.json()["choices"][0]["message"]
+                        log.info("LLM (Groq %s): %s", model_name, message)
+                        return message
+                    else:
+                        log.warning("Groq modelo %s devolvió status %s: %s", model_name, response.status_code, response.text)
+            except Exception as e:
+                log.warning("Fallo en Groq LLM modelo %s: %s", model_name, e)
+
+    # Fallback a Ollama local (si está disponible)
+    try:
+        payload = {
+            "model": config.LLM_MODEL,
+            "messages": messages,
+            "tools": tools.schemas(),
+            "stream": False,
+            "options": {"temperature": config.LLM_TEMPERATURE},
+        }
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(
+                f"{config.OLLAMA_URL}/api/chat",
+                json=payload,
+            )
+            if response.status_code == 200:
+                data = response.json()
+                return data["message"]
+    except Exception as e:
+        log.warning("Fallo en Ollama local: %s", e)
+
+    # Fallback conversacional seguro para no romper la llamada WebSocket
+    return {
+        "role": "assistant",
+        "content": "Un momento, por favor. Consultando con la vivienda...",
     }
-
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(
-            f"{config.OLLAMA_URL}/api/chat",
-            json=payload,
-        )
-        response.raise_for_status()
-
-        data = response.json()
-        return data["message"]
 
 
 async def respond(

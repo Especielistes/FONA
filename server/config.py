@@ -39,7 +39,7 @@ DOOR_CONFIRM_TIMEOUT_S = 45  # tiempo que esperamos la confirmación del residen
 
 # --- Groq API (Para despliegue gratuito ultra-rápido en la nube) ---
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_LLM_MODEL = os.getenv("GROQ_LLM_MODEL", "qwen/qwen3.6-27b")
+GROQ_LLM_MODEL = os.getenv("GROQ_LLM_MODEL", "llama-3.3-70b-versatile")
 GROQ_STT_MODEL = os.getenv("GROQ_STT_MODEL", "whisper-large-v3-turbo")
 
 # --- Almacenamiento ---
