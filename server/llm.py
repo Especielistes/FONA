@@ -44,10 +44,9 @@ async def chat(messages: list[dict]) -> dict:
     if config.GROQ_API_KEY:
         candidate_models = [
             config.GROQ_LLM_MODEL,
-            "llama3-70b-8192",
-            "llama3-8b-8192",
-            "gemma2-9b-it",
-            "llama-3.2-3b-preview",
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "qwen-2.5-coder-32b",
         ]
         # Eliminar duplicados manteniendo orden
         candidate_models = list(dict.fromkeys(candidate_models))
