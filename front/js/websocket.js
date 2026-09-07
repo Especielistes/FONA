@@ -57,9 +57,19 @@ export class PorteroSocket {
   }
 
   sendText(content) {
-    const text = String(content || "").trim();
-    if (!text || !this.isOpen()) {
+    if (!this.isOpen() || !content) {
       return false;
+    }
+
+    if (typeof content === "object") {
+      this.ws.send(JSON.stringify(content));
+      return true;
+    }
+
+    const text = String(content).trim();
+    if (text.startsWith("{")) {
+      this.ws.send(text);
+      return true;
     }
 
     this.ws.send(
