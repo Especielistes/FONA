@@ -136,6 +136,19 @@ async def run(ws: WebSocket) -> None:
 
             reply, end_session = await llm.respond(messages, ctx)
 
+            # Garantía antibloqueo: Si la IA no invocó la herramienta pero el visitante expresa intención de acceso
+            if not ctx.get("open_door") and not ctx.get("requested_door"):
+                lowered = text.lower()
+                intenciones = ["abrir", "ábreme", "abreme", "entre", "entrar", "pasar", "visita", "paquete", "repartidor", "soy", "hola", "vengo"]
+                if any(k in lowered for k in intenciones):
+                    log.info("Intención de acceso detectada: solicitando apertura a Casa...")
+                    ctx["requested_door"] = True
+                    reply, end_session = await tools.execute(
+                        "solicitar_apertura",
+                        {"visitante": text, "motivo": "Solicitud de entrada"},
+                        ctx,
+                    )
+
             # ================================================================
             # APERTURA AUTORIZADA
             # ================================================================
