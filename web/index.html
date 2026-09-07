@@ -613,7 +613,7 @@ document.getElementById("clearSigns").addEventListener("click", () => {
 
 document.getElementById("sendSigns").addEventListener("click", () => {
   if (signBuffer.length === 0) return;
-  sendText(signBuffer.join(" "));
+  sendText(signBuffer.join(" "), "signs");
   signBuffer.length = 0;
   lastCommitted = null;
   renderBuffer();
@@ -752,9 +752,14 @@ function addTurn(role, text) {
 
 // ================================================================ WebSocket
 
-function sendText(content) {
+function sendText(content, source = "text") {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  ws.send(JSON.stringify({ type: "text", content }));
+  ws.send(JSON.stringify({
+    type: "text",
+    content,
+    source,
+    vocabulary: [...dataset.keys()]
+  }));
 }
 
 textInput.addEventListener("keydown", event => {

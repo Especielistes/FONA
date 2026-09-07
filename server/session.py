@@ -119,13 +119,14 @@ async def run(ws: WebSocket) -> None:
 
     try:
         while True:
-            text = await _receive_input(ws, detector)
-            if text is None:
+            entry = await _receive_input(ws, detector)
+            if entry is None:
                 break
 
             log.info("VISITANTE: %s", text)
             await _send(ws, {"type": "transcript", "role": "visitor", "content": text})
             messages.append({"role": "user", "content": text})
+
             reply, end_session = await llm.respond(messages, ctx)
 
             # ================================================================
