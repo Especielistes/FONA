@@ -98,6 +98,13 @@ async def _receive_input(ws: WebSocket, detector: UtteranceDetector) -> str | No
                         return None
                     if kind == "text":
                         content = (payload.get("content") or "").strip()
+                        if content.startswith("{"):
+                            try:
+                                inner = json.loads(content)
+                                if isinstance(inner, dict) and inner.get("content"):
+                                    content = str(inner["content"]).strip()
+                            except Exception:
+                                pass
                         if content:
                             return content
             except Exception:
