@@ -119,8 +119,8 @@ async def run(ws: WebSocket) -> None:
 
     try:
         while True:
-            entry = await _receive_input(ws, detector)
-            if entry is None:
+            text = await _receive_input(ws, detector)
+            if text is None:
                 break
 
             log.info("VISITANTE: %s", text)
